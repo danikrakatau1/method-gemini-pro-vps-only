@@ -61,6 +61,23 @@ Atau dengan vault:
 Panel remote berjalan di `127.0.0.1:8765`. Jangan expose langsung ke internet.
 Pakai reverse proxy dengan autentikasi. Contoh Caddy ada di `Caddyfile.example`.
 
+### Tanpa domain
+
+Domain tidak wajib untuk menyelesaikan CAPTCHA. CAPTCHA ada di layar Android,
+bukan di domain. Panel web cuma mengantar screenshot dan tap.
+
+Tanpa domain, pilihannya:
+
+- Akses lewat Tailscale: buka `http://<IP-TAILSCALE>:8765/waydroid/remote`.
+  Traffic sudah terenkripsi oleh Tailscale, jadi HTTPS tidak diperlukan.
+- SSH tunnel dari HP/Termux: `ssh -L 8765:127.0.0.1:8765 user@VPS`, lalu buka
+  `http://127.0.0.1:8765/waydroid/remote` di browser HP.
+- Tanpa web sama sekali: pakai ADB relay Tailscale, tarik screenshot dengan
+  `adb exec-out screencap -p`, lalu kirim `input tap`, `input text`, dan `input keyevent`.
+
+Domain + HTTPS + basicauth hanya diperlukan kalau panel mau diakses publik
+lewat internet biasa.
+
 ## Batasan
 
 - Satu Waydroid instance hanya satu Android user aktif.
