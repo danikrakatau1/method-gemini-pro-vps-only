@@ -1,0 +1,13 @@
+[Unit]
+Description=Waydroid remote control panel
+After=network.target
+
+[Service]
+Environment=ADB_BIN=/usr/bin/adb
+WorkingDirectory=__ROOT__/waydroid-web
+ExecStart=/usr/bin/python3 __ROOT__/waydroid-web/app_remote.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

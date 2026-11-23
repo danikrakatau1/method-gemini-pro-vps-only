@@ -1,0 +1,12 @@
+# Ganti domain dan password. Password sebaiknya dari file 0600, bukan hardcode.
+example.com {
+    encode gzip
+
+    @wd basicauth {
+        wd <HASH_PASSWORD_DISINI>
+    }
+
+    handle /waydroid/* @wd {
+        reverse_proxy 127.0.0.1:8765
+    }
+}

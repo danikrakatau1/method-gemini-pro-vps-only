@@ -1,0 +1,2 @@
+#!/bin/bash
+exec /usr/bin/python3 ${CREDVAULT_DIR:-/srv/meowtools/credvault}/credvault.py "$@"

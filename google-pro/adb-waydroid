@@ -1,0 +1,24 @@
+#!/bin/bash
+# ADB wrapper: route "adb shell" through waydroid root shell; pass everything else to real adb.
+set -e
+REAL_ADB=/usr/bin/adb
+args=("$@")
+
+# Strip "-s <serial>" if present.
+if [ "${args[0]}" = "-s" ]; then
+  args=("${args[@]:2}")
+fi
+
+if [ "${args[0]}" = "shell" ]; then
+  unset 'args[0]'
+  cmd=""
+  for a in "${args[@]}"; do
+    cmd+="$a "
+  done
+  if [[ "$cmd" == *uiautomator* || "$cmd" == *screencap* ]]; then
+    exec "$REAL_ADB" shell "$cmd"
+  fi
+  exec waydroid shell -- /system/bin/sh -c "$cmd"
+fi
+
+exec "$REAL_ADB" "${args[@]}"

@@ -1,0 +1,11 @@
+[Unit]
+Description=ADB relay for Waydroid on Tailscale IP
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/socat TCP-LISTEN:5556,bind=__TAILSCALE_IP__,reuseaddr,fork TCP:192.168.240.112:5555
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

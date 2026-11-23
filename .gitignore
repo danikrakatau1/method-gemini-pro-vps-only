@@ -1,0 +1,22 @@
+# secrets
+key.bin
+vault.enc
+password.txt
+hash.txt
+.env
+*.pem
+*.key
+
+# runtime data
+ultra0-report/
+__pycache__/
+*.pyc
+*.log
+*.xz
+frida-server*
+*.img
+
+# local state
+downloads/
+screenshots/
+.DS_Store
