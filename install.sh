@@ -23,9 +23,9 @@ WR="$ROOT/waydroid-web"
 echo "[1/8] Install dependency dasar"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq curl ca-certificates gnupg python3 python3-pip python3-flask \
-  waydroid lxc weston android-tools-adb socat xz-utils || {
-  echo "Gagal install paket dasar. Perlu Ubuntu/Debian dengan repo Waydroid aktif."
+apt-get install -y -qq curl ca-certificates gnupg git unzip python3 python3-pip \
+  python3-flask android-tools-adb socat xz-utils || {
+  echo "Gagal install paket dasar."
   exit 1
 }
 
