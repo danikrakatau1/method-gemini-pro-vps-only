@@ -13,16 +13,17 @@ ln -sf /dev/binderfs/binder /dev/binder
 ln -sf /dev/binderfs/hwbinder /dev/hwbinder
 ln -sf /dev/binderfs/vndbinder /dev/vndbinder
 
-# Weston X11 compositor on :100 (started by sgdesk-waydroid-xvfb + manual weston)
-if ! pgrep -f 'weston --backend=x11 --renderer=pixman --socket=waydroid-wayland-x11' >/dev/null; then
-  XDG_RUNTIME_DIR=/run/user/0 DISPLAY=:100 nohup weston --backend=x11 --renderer=pixman \
-    --socket=waydroid-wayland-x11 --log=/var/lib/waydroid/weston-x11.log >/dev/null 2>&1 &
+# Headless Weston compositor. ADB screenshot/input does not need a visible X display.
+if ! pgrep -f 'weston --backend=headless --renderer=pixman --socket=waydroid-wayland' >/dev/null; then
+  rm -f /run/user/0/waydroid-wayland /run/user/0/waydroid-wayland.lock 2>/dev/null || true
+  XDG_RUNTIME_DIR=/run/user/0 nohup weston --backend=headless --renderer=pixman \
+    --socket=waydroid-wayland --log=/var/lib/waydroid/weston-headless.log >/dev/null 2>&1 &
   sleep 3
 fi
 
 # Waydroid session
 if ! waydroid status 2>&1 | grep -q '^Session:\s*RUNNING'; then
-  XDG_RUNTIME_DIR=/run/user/0 WAYLAND_DISPLAY=waydroid-wayland-x11 \
+  XDG_RUNTIME_DIR=/run/user/0 WAYLAND_DISPLAY=waydroid-wayland \
     nohup waydroid session start >/var/lib/waydroid/session.log 2>&1 &
   for i in $(seq 1 40); do
     sleep 2
