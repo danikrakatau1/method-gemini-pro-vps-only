@@ -37,6 +37,7 @@ SHOT_W = int(os.environ.get("SHOT_W", "540"))
 SHOT_H = int(os.environ.get("SHOT_H", "960"))
 BASE_PATH = os.environ.get("BASE_PATH", "/geminitoddd2tahun").rstrip("/")
 WORKER_ENABLED = os.environ.get("WORKER_ENABLED", "1") != "0"
+BIND_HOST = os.environ.get("BIND_HOST", "127.0.0.1")
 
 app = Flask(__name__)
 app.secret_key = SECRET_FILE.read_bytes()
@@ -556,4 +557,4 @@ if __name__ == "__main__":
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
         raise SystemExit("Worker queue sudah berjalan.")
-    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", "8766")), threaded=True)
+    app.run(host=BIND_HOST, port=int(os.environ.get("PORT", "8766")), threaded=True)

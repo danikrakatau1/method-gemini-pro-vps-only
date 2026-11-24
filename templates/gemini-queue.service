@@ -1,0 +1,20 @@
+[Unit]
+Description=Gemini 2 Tahun multi-user queue panel
+After=network.target
+
+[Service]
+Environment=QUEUE_DIR=__ROOT__/gemini_queue
+Environment=GOOGLE_PRO_DIR=__ROOT__/google-pro
+Environment=ADB_BIN=/usr/bin/adb
+Environment=PYTHON_BIN=/usr/bin/python3
+Environment=BASE_PATH=/geminitoddd2tahun
+Environment=BIND_HOST=__BIND_HOST__
+Environment=PORT=8766
+Environment=WORKER_ENABLED=1
+WorkingDirectory=__ROOT__/gemini_queue
+ExecStart=/usr/bin/python3 __ROOT__/gemini_queue/app.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -21,14 +21,30 @@ cd waydroid-toolkit
 sudo ./install.sh
 ```
 
+Untuk VPS dengan Tailscale:
+
+```bash
+sudo TAILSCALE_IP=100.x.y.z ./install.sh
+```
+
+Untuk VPS dengan domain:
+
+```bash
+sudo DOMAIN=contoh.com ./install.sh
+```
+
 Installer melakukan:
-- install paket Waydroid, LXC, Weston, ADB, socat, Flask, Frida
+- install paket Waydroid, LXC, Weston, ADB, socat, Flask, Frida, dan bcrypt
 - daftarkan repo Waydroid
 - siapkan `/dev/binderfs` dan override systemd
-- generate kunci vault lokal
+- generate kunci vault dan kunci sesi panel
+- generate password remote di `waydroid-web/password.txt` dengan izin `600`
 - unduh frida-server x86_64
 - init image Waydroid GAPPS jika belum ada
-- aktifkan panel remote lokal di `127.0.0.1:8765`
+- pasang panel remote lokal di `127.0.0.1:8765`
+- pasang panel antrean di `127.0.0.1:8766` atau di IP Tailscale
+- buat unit systemd `waydroid-remote` dan `gemini-queue`
+- buat `Caddyfile.generated` jika `DOMAIN` diisi
 
 ## Setelah install
 
@@ -38,8 +54,17 @@ Installer melakukan:
 /srv/meowtools/google-pro/0_cek.sh
 ```
 
+Setelah install, buka panel antrean:
+
+- Tanpa domain: `http://127.0.0.1:8766/geminitoddd2tahun/`
+- Dengan Tailscale: `http://<IP-TAILSCALE>:8766/geminitoddd2tahun/`
+- Dengan domain: `https://<DOMAIN>/geminitoddd2tahun/`
+
+Daftar akun web di `/geminitoddd2tahun/register`, lalu login. Akun web bukan akun
+Google. Password web hanya disimpan sebagai hash bcrypt.
+
 Login ke Google di Play Store Waydroid secara manual. Selesaikan CAPTCHA dan 2FA
-sendiri. Kata sandi tidak pernah disimpan dan tidak pernah dikirim ke chat.
+sendiri. Kata sandi Google tidak pernah disimpan dan tidak pernah dikirim ke chat.
 
 ## Jalankan alur
 
@@ -90,6 +115,7 @@ lewat internet biasa.
 
 Jangan pernah commit:
 - `key.bin`
+- `secret.key`
 - `vault.enc`
 - `password.txt`
 - `hash.txt`

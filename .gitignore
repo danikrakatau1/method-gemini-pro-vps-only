@@ -1,5 +1,6 @@
 # secrets
 key.bin
+secret.key
 vault.enc
 password.txt
 hash.txt
