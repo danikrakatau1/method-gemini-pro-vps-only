@@ -48,6 +48,26 @@ Installer melakukan:
 
 ## Setelah install
 
+Jalankan menu utama:
+
+```bash
+/srv/meowtools/gas.sh
+```
+
+Menu:
+1. Tambah akun ke vault
+2. Login Google ke device (CAPTCHA/2FA manual lewat web remote)
+3. Claim 12 bulan
+4. Claim tambah 6 bulan (step 2)
+5. Claim tambah 6 bulan (step 3)
+6. Cek status
+7. Bersihkan device (fresh untuk akun baru)
+8. Keluar
+
+Untuk pakai lama: `gas.sh` → pilih 7 → mulai lagi dari menu 1.
+
+Cara manual (opsional):
+
 ```bash
 /srv/meowtools/credvault/vault add akun1
 /srv/meowtools/google-pro/start-runtime.sh

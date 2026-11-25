@@ -130,8 +130,14 @@ def type_secret(secret, pos=None):
     for _ in range(60):
         ad("shell", "input", "keyevent", "67")
     for ch in secret:
+        if ch == "@":
+            ad("shell", "input", "text", "@")
+            time.sleep(0.04)
+            continue
         code, shift = key_for(ch)
         if code is None:
+            ad("shell", "input", "text", ch)
+            time.sleep(0.04)
             continue
         if shift:
             ad("shell", "input", "keyevent", "59")
