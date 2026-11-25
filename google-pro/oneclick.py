@@ -249,6 +249,13 @@ def sign_in(email, password, reset=True):
             break
         type_secret(password, pos)
     ad("shell", "input", "keyevent", "66")
+    time.sleep(3)
+    xml_after = dump("signin2submit")
+    if edit(xml_after):
+        b = btn(xml_after, "Next") or btn(xml_after, "Lanjut") or btn(xml_after, "Continue")
+        if b:
+            print("Menekan tombol Next password...", flush=True)
+            ad("shell", "input", "tap", str((b[0] + b[2]) // 2), str((b[1] + b[3]) // 2))
     print("MENUNGGU verifikasi 2FA di HP kamu (bisa sampai 5 menit)...", flush=True)
     code_printed = False
     captcha_printed = False
