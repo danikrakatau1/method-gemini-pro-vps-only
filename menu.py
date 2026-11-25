@@ -24,8 +24,18 @@ def line():
     print("-" * 58, flush=True)
 
 
+def safe_load():
+    try:
+        return vault_run.load()
+    except SystemExit:
+        return []
+    except Exception:
+        return []
+
+
 def show_status():
-    email = vault_run.load()[-1]["email"] if vault_run.load() else "-"
+    rows = safe_load()
+    email = rows[-1]["email"] if rows else "-"
     print("EMAIL      :", email, flush=True)
     print("ACCOUNTS   :", oc.accounts(), flush=True)
     try:
@@ -80,12 +90,12 @@ def do_add_vault():
         subprocess.run(["/usr/bin/python3", os.path.join(BASE, "vault_add.py")])
     finally:
         os.dup2(NULL_STDIN, 0)
-    rows = vault_run.load()
+    rows = safe_load()
     print("Akun di vault:", [r["email"] for r in rows], flush=True)
 
 
 def do_login():
-    rows = vault_run.load()
+    rows = safe_load()
     if not rows:
         print("Vault kosong. Pilih menu 1 dulu.", flush=True)
         return
@@ -97,7 +107,7 @@ def do_login():
 
 
 def do_claim(plan, stack):
-    rows = vault_run.load()
+    rows = safe_load()
     if not rows:
         print("Vault kosong. Pilih menu 1 dulu.", flush=True)
         return
@@ -122,7 +132,7 @@ def show_subscription_text():
 
 
 def do_clean():
-    rows = vault_run.load()
+    rows = safe_load()
     target = rows[-1]["email"] if rows else "__none__"
     print("Menghapus semua akun Google dari device...", flush=True)
     for acc in list(oc.accounts()):
