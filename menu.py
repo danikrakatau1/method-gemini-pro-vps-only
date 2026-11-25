@@ -7,6 +7,9 @@ import time
 import datetime
 
 BASE = "/srv/meowtools/google-pro"
+SAVED_STDIN = None
+NULL_STDIN = None
+MENU_IN = None
 sys.path.insert(0, BASE)
 os.environ.setdefault("ADB_PATH", os.path.join(BASE, "adb-waydroid"))
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
@@ -71,7 +74,12 @@ def ensure_google_one():
 
 
 def do_add_vault():
-    subprocess.run(["/usr/bin/python3", os.path.join(BASE, "vault_add.py")])
+    global SAVED_STDIN, NULL_STDIN
+    os.dup2(SAVED_STDIN, 0)
+    try:
+        subprocess.run(["/usr/bin/python3", os.path.join(BASE, "vault_add.py")])
+    finally:
+        os.dup2(NULL_STDIN, 0)
     rows = vault_run.load()
     print("Akun di vault:", [r["email"] for r in rows], flush=True)
 
@@ -172,11 +180,12 @@ def menu():
 
 
 if __name__ == "__main__":
-    # Baca pilihan menu dari terminal asli supaya tidak dimakan subprocess.
-    try:
-        sys.stdin = open("/dev/tty", "r")
-    except OSError:
-        pass
+    global SAVED_STDIN, NULL_STDIN, MENU_IN
+    SAVED_STDIN = os.dup(0)
+    NULL_STDIN = os.open("/dev/null", os.O_RDONLY)
+    MENU_IN = os.fdopen(SAVED_STDIN, "r")
+    sys.stdin = MENU_IN
+    os.dup2(NULL_STDIN, 0)
     # Pastikan runtime Waydroid/ADB siap sebelum masuk menu.
     try:
         subprocess.run([os.path.join(BASE, "start-runtime.sh")], timeout=300,
