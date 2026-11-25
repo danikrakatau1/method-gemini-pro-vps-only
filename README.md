@@ -81,6 +81,13 @@ Atau dengan vault:
 /srv/meowtools/credvault/vault-run akun1 -- --force --no-add --stack --plan pro6
 ```
 
+Atau pakai runner sekali klik (12 + 6 + 6 bulan) — lihat `ONECLICK.md`:
+
+```bash
+/srv/meowtools/google-pro/gas.sh --check   # aman, tidak membeli
+/srv/meowtools/google-pro/gas.sh           # jalankan klaim
+```
+
 ## Remote panel
 
 Panel remote berjalan di `127.0.0.1:8765`. Jangan expose langsung ke internet.

@@ -18,6 +18,11 @@ if [ "${args[0]}" = "shell" ]; then
   if [[ "$cmd" == *uiautomator* || "$cmd" == *screencap* ]]; then
     exec "$REAL_ADB" shell "$cmd"
   fi
+  # Activity/intent & input harus jalan sebagai shell (uid 2000). Kalau lewat
+  # root, am start sering nggak bikin activity muncul di foreground.
+  case "$cmd" in
+    am\ *|monkey\ *|input\ *) exec "$REAL_ADB" shell "$cmd" ;;
+  esac
   exec waydroid shell -- /system/bin/sh -c "$cmd"
 fi
 

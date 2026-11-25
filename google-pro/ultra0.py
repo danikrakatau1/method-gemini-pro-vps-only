@@ -379,16 +379,48 @@ def accounts_on_device() -> list:
     return out.splitlines()
 
 
+def tap_google_row() -> bool:
+    """Tap baris 'Google' di layar pilih tipe akun (bukan logo Google)."""
+    xml = ui_xml()
+    best = None
+    for m in re.finditer(r"<node[^>]*>", xml):
+        s = m.group(0)
+        t = re.search(r'text="([^"]*)"', s)
+        d = re.search(r'content-desc="([^"]*)"', s)
+        b = re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', s)
+        lab = ((t.group(1) if t else "") or (d.group(1) if d else "")).strip()
+        if lab != "Google" or not b:
+            continue
+        x1, y1, x2, y2 = (int(b.group(i)) for i in range(1, 5))
+        w, h = x2 - x1, y2 - y1
+        if w < 200 or h < 60:          # logo/padat diabaikan
+            continue
+        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+        if best is None or w > best[0]:
+            best = (w, cx, cy)
+    if not best:
+        return False
+    tap(best[1], best[2])
+    return True
+
+
 def add_account(email, password, totp_secret="") -> bool:
     """Menambahkan akun ke perangkat Android."""
     step(f"Sedang menambahkan akun ke perangkat: {email}")
     before = len(accounts_on_device())
     sh("shell", "am start -a android.settings.ADD_ACCOUNT_SETTINGS")
-    time.sleep(3)
-    tap_text("Google", exact=True) or tap_text("Google")
     time.sleep(5)
 
     pos = find_edit()
+    if not pos:
+        # Layar pemilih tipe akun: pilih baris Google (bukan logo).
+        tap_google_row()
+        time.sleep(5)
+        pos = find_edit()
+    if not pos:
+        tap_text("Google", exact=True) or tap_text("Google")
+        time.sleep(5)
+        pos = find_edit()
     if pos:
         for _ in range(3):                      # Periksa ulang teks input agar tidak ada karakter yang hilang
             tap(*pos); time.sleep(0.8)
@@ -539,9 +571,21 @@ def switch_play(email) -> bool:
 # ---------- Frida ----------
 def launch_app() -> int:
     sh("shell", f"am force-stop {PKG}")
-    sh("shell", f"monkey -p {PKG} -c android.intent.category.LAUNCHER 1")
+    try:
+        out = sh("shell", f"cmd package resolve-activity --brief -c android.intent.category.LAUNCHER {PKG}")
+        cmp = next((ln.strip() for ln in out.splitlines()
+                    if "/" in ln and " " not in ln.strip()), "")
+        if cmp:
+            sh("shell", f"am start -n {cmp}")
+        else:
+            sh("shell", f"monkey -p {PKG} -c android.intent.category.LAUNCHER 1")
+    except Exception:
+        sh("shell", f"monkey -p {PKG} -c android.intent.category.LAUNCHER 1")
     time.sleep(7)
     pid = sh("shell", f"pidof {PKG}")
+    if not pid.strip().isdigit():
+        time.sleep(4)
+        pid = sh("shell", f"pidof {PKG}")
     return int(pid) if pid.strip().isdigit() else 0
 
 
@@ -715,6 +759,21 @@ def confirm_zero(wait=20, password="") -> dict:
             md = re.search(r"(\d+) days", text)
             baseline_days = int(md.group(1)) if md else 0
             out["baseline_days"] = baseline_days
+            lowt = text.lower()
+            # Sheet trial: "Starting today 12-month free trial", baru bertagging
+            # setelah trial. Tidak ada baris "Today $0" eksplisit, jadi deteksi
+            # berdasarkan teks trial + jaminan nggak ditagih sebelum batal.
+            if (("free trial" in lowt or "uji coba gratis" in lowt)
+                    and ("won't be charged" in lowt or "tidak dikenakan biaya" in lowt)):
+                note("Promo free trial terdeteksi, lanjut tekan Subscribe")
+                if tap_text("Subscribe", "Berlangganan", "订阅", "Đăng ký"):
+                    time.sleep(6)
+                    if finish_checkout(password=password, baseline_days=baseline_days):
+                        out["confirmed"] = True
+                        ok("Berhasil mengonfirmasi promo free trial")
+                    else:
+                        warn("Subscribe ditekan, tapi alur checkout belum selesai")
+                    return out
             m = re.search(r"(US\$|HK\$|NT\$|\$|€|£)\s?([\d.,]+)", text)
             if m:
                 out["price"] = m.group(0)
@@ -910,7 +969,10 @@ def main():
     REPORT_DIR.mkdir(exist_ok=True)
     rows = []
     if a.account_env:
-        rows = [[os.environ.get("CRED_EMAIL", ""), os.environ.get("CRED_PASSWORD", ""), "", os.environ.get("CRED_TOTP", "")]]
+        rows = [[os.environ.get("CRED_EMAIL", ""), os.environ.get("CRED_PASSWORD", ""), "", os.environ.get("CRED_TOTP", ""),
+                 os.environ.get("CRED_CARD_NUMBER", ""), os.environ.get("CRED_CARD_EXP", ""),
+                 os.environ.get("CRED_CARD_CVC", ""), os.environ.get("CRED_CARD_HOLDER", ""),
+                 os.environ.get("CRED_CARD_ZIP", "")]]
     elif a.list and not a.account and not a.accounts:
         a.account = "current@device"
     if a.account_env:
