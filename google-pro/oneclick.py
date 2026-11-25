@@ -106,6 +106,22 @@ def focus():
     return m.group(1) if m else ""
 
 
+def key_for(ch):
+    lower = {
+        "a": 29, "b": 30, "c": 31, "d": 32, "e": 33, "f": 34, "g": 35, "h": 36,
+        "i": 37, "j": 38, "k": 39, "l": 40, "m": 41, "n": 42, "o": 43, "p": 44,
+        "q": 45, "r": 46, "s": 47, "t": 48, "u": 49, "v": 50, "w": 51, "x": 52,
+        "y": 53, "z": 54, "0": 7, "1": 8, "2": 9, "3": 10, "4": 11,
+        "5": 12, "6": 13, "7": 14, "8": 15, "9": 16,
+        ".": 56, ",": 55, "-": 69, "/": 68, "@": 9, " ": 62,
+    }
+    if ch in lower:
+        return lower[ch], (ch.isupper() or ch == "@")
+    if ch.lower() in lower and ch.isupper():
+        return lower[ch.lower()], True
+    return None, False
+
+
 def type_secret(secret, pos=None):
     x, y = pos or (360, 470)
     ad("shell", "input", "tap", str(x), str(y))
@@ -113,7 +129,14 @@ def type_secret(secret, pos=None):
     ad("shell", "input", "keyevent", "123")
     for _ in range(60):
         ad("shell", "input", "keyevent", "67")
-    ad("shell", "input", "text", secret)
+    for ch in secret:
+        code, shift = key_for(ch)
+        if code is None:
+            continue
+        if shift:
+            ad("shell", "input", "keyevent", "59")
+        ad("shell", "input", "keyevent", str(code))
+        time.sleep(0.04)
     time.sleep(1)
 
 
