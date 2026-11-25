@@ -408,9 +408,10 @@ def main():
     print("ACCOUNTS", accounts(), flush=True)
     print("PLAY", ultra0.current_play_account(), flush=True)
     print("COUNTRY", play_country(email), flush=True)
+    # Query the SKU first: this forces Google One to log the billing account
+    price = sku_price()
     ok, got, want = check_billing_account(email)
     print("BILLING_OK", ok, "GOT", got, "WANT", want, flush=True)
-    price = sku_price()
     print("SKU_MICROS", price, flush=True)
     v = lib_valid_until()
     print("VALID_UNTIL", datetime.datetime.fromtimestamp(v / 1000, datetime.timezone.utc).isoformat() if v else None, flush=True)

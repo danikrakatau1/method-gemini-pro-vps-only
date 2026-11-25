@@ -4,6 +4,7 @@ set -e
 
 BASE=/srv/meowtools/google-pro
 FRIDA_BIN=/root/.hermes/cache/scratch/frida-server-x86_64
+[ -s "$FRIDA_BIN" ] || FRIDA_BIN=$BASE/frida-server-x86_64
 
 # Binderfs
 if ! mountpoint -q /dev/binderfs; then

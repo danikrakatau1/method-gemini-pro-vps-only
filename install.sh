@@ -111,6 +111,9 @@ if [ ! -f "$GP/frida-server-x86_64" ]; then
     mv -f "$GP/frida-server" "$GP/frida-server-x86_64" 2>/dev/null || true
   fi
   chmod 755 "$GP/frida-server-x86_64"
+  mkdir -p /root/.hermes/cache/scratch
+  cp "$GP/frida-server-x86_64" /root/.hermes/cache/scratch/frida-server-x86_64
+  chmod 755 /root/.hermes/cache/scratch/frida-server-x86_64
 fi
 
 echo "[7/9] Systemd units"
