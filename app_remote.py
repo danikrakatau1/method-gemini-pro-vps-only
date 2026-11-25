@@ -129,10 +129,10 @@ function at(cx,cy){const r=img.getBoundingClientRect();return{x:Math.round((cx-r
 let start=null;
 img.addEventListener('pointerdown',e=>{e.preventDefault();start={cx:e.clientX,cy:e.clientY};img.setPointerCapture(e.pointerId)});
 img.addEventListener('pointerup',e=>{e.preventDefault();if(!start)return;const a=start;start=null;const dx=e.clientX-a.cx,dy=e.clientY-a.cy,p=at(e.clientX,e.clientY);
-if(Math.abs(dx)>14||Math.abs(dy)>14){const q=at(a.cx,a.cy);document.getElementById('coord').textContent=q.x+','+q.y+' -> '+p.x+','+p.y;post({action:'swipe',x1:q.x,y1:q.y,x2:p.x,y2:p.y,duration:500}).then(()=>setTimeout(refresh,250))}
-else{document.getElementById('coord').textContent=p.x+','+p.y;post({action:'tap',x:p.x,y:p.y}).then(()=>{if(!auto.checked)setTimeout(refresh,250)})}});
-document.getElementById('sendText').onclick=async()=>{const v=document.getElementById('txt').value;if(v){await post({action:'text',value:v});document.getElementById('txt').value='';setTimeout(refresh,250)}};
-document.getElementById('sendKey').onclick=async()=>{const v=document.getElementById('key').value.trim();if(v){await post({action:'keyevent',key:v});setTimeout(refresh,250)}};
+if(Math.abs(dx)>14||Math.abs(dy)>14){const q=at(a.cx,a.cy);document.getElementById('coord').textContent=q.x+','+q.y+' -> '+p.x+','+p.y;post({action:'swipe',x1:q.x,y1:q.y,x2:p.x,y2:p.y,duration:500}).then(()=>{setTimeout(refresh,800);setTimeout(refresh,1600)})}
+else{document.getElementById('coord').textContent=p.x+','+p.y;post({action:'tap',x:p.x,y:p.y}).then(()=>{setTimeout(refresh,800);setTimeout(refresh,1600)})}});
+document.getElementById('sendText').onclick=async()=>{const v=document.getElementById('txt').value;if(v){await post({action:'text',value:v});document.getElementById('txt').value='';setTimeout(refresh,800)}};
+document.getElementById('sendKey').onclick=async()=>{const v=document.getElementById('key').value.trim();if(v){await post({action:'keyevent',key:v});setTimeout(refresh,800)}};
 </script></body></html>'''
     return Response(html, mimetype="text/html")
 
