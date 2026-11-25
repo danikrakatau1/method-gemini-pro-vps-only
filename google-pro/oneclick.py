@@ -262,10 +262,19 @@ def sign_in(email, password, reset=True):
     print("MENUNGGU verifikasi 2FA di HP kamu (bisa sampai 5 menit)...", flush=True)
     code_printed = False
     captcha_printed = False
+    submitted_at = time.time()
+    empty_pw_streak = 0
     for _ in range(60):
         time.sleep(5)
         xml = dump("signinwait")
         joined = " ".join(texts(xml))
+        if time.time() - submitted_at > 20 and edit(xml) and (edit_value(xml) or "") == "":
+            empty_pw_streak += 1
+            if empty_pw_streak >= 3:
+                print("PASSWORD_SALAH terdeteksi: kolom password kembali kosong setelah submit.", flush=True)
+                return "WRONG_PASSWORD"
+        else:
+            empty_pw_streak = 0
         if any(x in joined.lower() for x in (
             "wrong password", "incorrect password", "password is incorrect",
             "that password is wrong", "password tidak salah", "kata sandi salah",
