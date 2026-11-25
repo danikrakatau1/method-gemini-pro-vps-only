@@ -125,25 +125,33 @@ def key_for(ch):
 def type_secret(secret, pos=None):
     x, y = pos or (360, 470)
     ad("shell", "input", "tap", str(x), str(y))
-    time.sleep(0.5)
+    time.sleep(0.4)
     ad("shell", "input", "keyevent", "123")
-    for _ in range(60):
+    for _ in range(80):
+        ad("shell", "input", "keyevent", "67")
+    # Android 'input text' per karakter menjaga huruf kapital dan '@' tetap benar.
+    for ch in secret:
+        ad("shell", "input", "text", ch)
+        time.sleep(0.03)
+    time.sleep(0.6)
+    val = edit_value(dump("typeverify")) or ""
+    if len(val) == len(secret):
+        return
+    # Fallback untuk WebView yang menolak input text: keyevent per karakter.
+    ad("shell", "input", "tap", str(x), str(y))
+    ad("shell", "input", "keyevent", "123")
+    for _ in range(80):
         ad("shell", "input", "keyevent", "67")
     for ch in secret:
-        if ch == "@":
-            ad("shell", "input", "text", "@")
-            time.sleep(0.04)
-            continue
         code, shift = key_for(ch)
         if code is None:
             ad("shell", "input", "text", ch)
-            time.sleep(0.04)
-            continue
-        if shift:
-            ad("shell", "input", "keyevent", "59")
-        ad("shell", "input", "keyevent", str(code))
+        else:
+            if shift:
+                ad("shell", "input", "keyevent", "59")
+            ad("shell", "input", "keyevent", str(code))
         time.sleep(0.04)
-    time.sleep(1)
+    time.sleep(0.6)
 
 
 def billing_hash(email):
