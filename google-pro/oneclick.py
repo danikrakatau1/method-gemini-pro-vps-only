@@ -213,9 +213,11 @@ def sign_in(email, password, reset=True):
         ad("shell", "am", "force-stop", "com.google.android.gms.ui")
         ad("shell", "am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.HOME")
         time.sleep(2)
-    ad("shell", "am", "start", "-a", "android.settings.ADD_ACCOUNT_SETTINGS")
     pos = None
-    for _ in range(12):
+    for i in range(12):
+        if i % 3 == 0:
+            ad("shell", "am", "start", "-a", "android.settings.ADD_ACCOUNT_SETTINGS")
+            time.sleep(2)
         f = focus()
         xml = dump("signin1")
         pos = edit(xml)
