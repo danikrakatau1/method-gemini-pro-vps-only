@@ -180,7 +180,6 @@ def menu():
 
 
 if __name__ == "__main__":
-    global SAVED_STDIN, NULL_STDIN, MENU_IN
     SAVED_STDIN = os.dup(0)
     NULL_STDIN = os.open("/dev/null", os.O_RDONLY)
     MENU_IN = os.fdopen(SAVED_STDIN, "r")
