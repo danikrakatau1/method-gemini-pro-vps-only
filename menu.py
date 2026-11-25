@@ -172,6 +172,11 @@ def menu():
 
 
 if __name__ == "__main__":
+    # Baca pilihan menu dari terminal asli supaya tidak dimakan subprocess.
+    try:
+        sys.stdin = open("/dev/tty", "r")
+    except OSError:
+        pass
     # Pastikan runtime Waydroid/ADB siap sebelum masuk menu.
     try:
         subprocess.run([os.path.join(BASE, "start-runtime.sh")], timeout=300,
