@@ -119,7 +119,10 @@ def do_clean():
     print("Menghapus semua akun Google dari device...", flush=True)
     for acc in list(oc.accounts()):
         print("  hapus:", acc, flush=True)
-    oc.remove_other_accounts(target)
+    for _ in range(6):
+        if not oc.accounts():
+            break
+        oc.remove_other_accounts("__none__")
     for pkg in ("com.google.android.gms", "com.android.vending",
                 "com.google.android.googlequicksearchbox",
                 "com.google.android.apps.subscriptions.red"):
