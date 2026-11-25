@@ -19,8 +19,15 @@ sudo ./install.sh
 /srv/meowtools/google-pro/gas.sh
 ```
 
+`install.sh` also installs `xvfb`, creates the PulseAudio placeholder socket,
+and starts `Xvfb :100`. `start-runtime.sh` additionally recreates the
+`waydroid0` bridge via `waydroid-net.sh` and retries the container start, so
+the fresh-VPS blockers we hit (missing Xvfb, missing bridge, missing pulse
+socket) are handled automatically.
+
 `gas.sh --check` is read-only: it prints the account, Play country, billing
 account hash, SKU price, and current subscription without buying anything.
+
 The real run adds the vault account, removes old Google accounts from the
 device, switches Play Store, verifies the SKU price, then claims 12 months
 and stacks 6 + 6 months. CAPTCHA and 2FA are handed to the account owner.

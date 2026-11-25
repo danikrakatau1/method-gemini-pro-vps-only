@@ -42,7 +42,7 @@ if [ "$SKIP_APT" = "0" ]; then
   export DEBIAN_FRONTEND=noninteractive
   apt-get update -qq
   apt-get install -y -qq curl ca-certificates gnupg git unzip python3 python3-pip \
-    python3-flask android-tools-adb socat xz-utils || {
+    python3-flask android-tools-adb socat xz-utils xvfb || {
     echo "Gagal install paket dasar."
     exit 1
   }
@@ -196,6 +196,14 @@ echo "[9/9] Waydroid image"
 if [ "$SKIP_INIT" = "0" ] && [ ! -f /var/lib/waydroid/images/system.img ]; then
   echo "Mengunduh image Waydroid GAPPS. Ini bisa memakan waktu."
   waydroid init -f -s GAPPS
+fi
+
+echo "[9.5/9] Runtime preflight"
+mkdir -p /run/user/0/pulse && touch /run/user/0/pulse/native && chmod 666 /run/user/0/pulse/native
+if ! pgrep -f "Xvfb :100" >/dev/null; then
+  nohup Xvfb :100 -screen 0 1280x800x24 +extension RANDR +render -noreset \
+    >/var/log/xvfb-waydroid.log 2>&1 &
+  sleep 2
 fi
 
 echo

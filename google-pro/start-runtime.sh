@@ -12,6 +12,15 @@ fi
 ln -sf /dev/binderfs/binder /dev/binder
 ln -sf /dev/binderfs/hwbinder /dev/hwbinder
 ln -sf /dev/binderfs/vndbinder /dev/vndbinder
+mkdir -p /run/user/0/pulse && touch /run/user/0/pulse/native && chmod 666 /run/user/0/pulse/native
+
+# Xvfb :100 must exist before weston starts
+if ! pgrep -f "Xvfb :100" >/dev/null; then
+  nohup Xvfb :100 -screen 0 1280x800x24 +extension RANDR +render -noreset \
+    >/var/log/xvfb-waydroid.log 2>&1 &
+  sleep 2
+fi
+export DISPLAY=:100
 
 # Weston X11 compositor on :100 (started by sgdesk-waydroid-xvfb + manual weston)
 if ! pgrep -f 'weston --backend=x11 --renderer=pixman --socket=waydroid-wayland-x11' >/dev/null; then
@@ -21,6 +30,10 @@ if ! pgrep -f 'weston --backend=x11 --renderer=pixman --socket=waydroid-wayland-
 fi
 
 # Waydroid session
+if ! ip link show waydroid0 >/dev/null 2>&1; then
+  /usr/lib/waydroid/data/scripts/waydroid-net.sh stop 2>/dev/null || true
+  /usr/lib/waydroid/data/scripts/waydroid-net.sh start
+fi
 if ! waydroid status 2>&1 | grep -q '^Session:\s*RUNNING'; then
   XDG_RUNTIME_DIR=/run/user/0 WAYLAND_DISPLAY=waydroid-wayland-x11 \
     nohup waydroid session start >/var/lib/waydroid/session.log 2>&1 &
@@ -28,6 +41,17 @@ if ! waydroid status 2>&1 | grep -q '^Session:\s*RUNNING'; then
     sleep 2
     waydroid status 2>&1 | grep -q '^Session:\s*RUNNING' && break
   done
+  if ! waydroid status 2>&1 | grep -q '^Session:\s*RUNNING'; then
+    systemctl restart waydroid-container >/dev/null 2>&1 || true
+    sleep 5
+    /usr/lib/waydroid/data/scripts/waydroid-net.sh start >/dev/null 2>&1 || true
+    XDG_RUNTIME_DIR=/run/user/0 WAYLAND_DISPLAY=waydroid-wayland-x11 \
+      nohup waydroid session start >/var/lib/waydroid/session.log 2>&1 &
+    for i in $(seq 1 40); do
+      sleep 2
+      waydroid status 2>&1 | grep -q '^Session:\s*RUNNING' && break
+    done
+  fi
 fi
 
 # ADB + port forward
