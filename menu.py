@@ -172,7 +172,17 @@ def menu():
 
 
 if __name__ == "__main__":
-    subprocess.run(["/usr/bin/adb", "connect", oc.SERIAL], capture_output=True, timeout=30)
+    # Pastikan runtime Waydroid/ADB siap sebelum masuk menu.
+    try:
+        subprocess.run([os.path.join(BASE, "start-runtime.sh")], timeout=300,
+                       capture_output=True)
+    except Exception as e:
+        print("start-runtime gagal:", str(e)[:120], flush=True)
+    try:
+        subprocess.run(["/usr/bin/adb", "connect", oc.SERIAL],
+                       capture_output=True, timeout=20)
+    except Exception:
+        pass
     ultra0.ADB = ultra0.find_adb()
     ultra0.pick_device()
     ultra0.SERIAL = oc.SERIAL
