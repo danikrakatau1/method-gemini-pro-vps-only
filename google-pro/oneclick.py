@@ -280,6 +280,11 @@ def sign_in(email, password, reset=True):
             "captcha image", "listen and type", "type the numbers you hear",
             "not a robot", "distinguish humans from robots",
         ))
+        if "account recovery" in joined.lower() or "last password you remember" in joined.lower():
+            print("GOOGLE MEMINTA ACCOUNT RECOVERY.", flush=True)
+            print("Selesaikan manual di web remote (password terakhir yang kamu ingat),", flush=True)
+            print("atau ulang dari menu 1 dengan password Google terbaru di vault.", flush=True)
+            return False
         if is_captcha:
             if not captcha_printed:
                 print("CAPTCHA: selesaikan di web remote (gambar/audio), lalu lanjut.", flush=True)
