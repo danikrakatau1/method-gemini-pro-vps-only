@@ -79,6 +79,13 @@ def edit(xml):
     return None
 
 
+def edit_value(xml):
+    for t, d, tag, b in nodes(xml):
+        if b and "EditText" in tag:
+            return t
+    return None
+
+
 def wide_bottom(xml):
     best = None
     for t, d, tag, b in nodes(xml):
@@ -177,6 +184,11 @@ def sign_in(email, password):
         print("FAIL: email field tidak muncul", flush=True)
         return False
     type_secret(email, pos)
+    for _ in range(3):
+        val = edit_value(dump("signin1v")) or ""
+        if email.lower() in val.lower():
+            break
+        type_secret(email, pos)
     ad("shell", "input", "keyevent", "66")
     pos = None
     for _ in range(12):
@@ -189,6 +201,11 @@ def sign_in(email, password):
         print("FAIL: password field tidak muncul", flush=True)
         return False
     type_secret(password, pos)
+    for _ in range(3):
+        val = edit_value(dump("signin2v"))
+        if val is not None and len(val) == len(password):
+            break
+        type_secret(password, pos)
     ad("shell", "input", "keyevent", "66")
     print("MENUNGGU verifikasi 2FA di HP kamu (bisa sampai 5 menit)...", flush=True)
     code_printed = False
