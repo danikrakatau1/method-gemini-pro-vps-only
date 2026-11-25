@@ -177,12 +177,13 @@ def lib_active_for(email):
     return any(a.lower() == email.lower() and int(v or 0) > now for a, v in rows)
 
 
-def sign_in(email, password):
-    # Clear stale auth screens so the email field is really the GMS sign-in field
-    ad("shell", "am", "force-stop", "com.google.android.gms")
-    ad("shell", "am", "force-stop", "com.google.android.gms.ui")
-    ad("shell", "am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.HOME")
-    time.sleep(2)
+def sign_in(email, password, reset=True):
+    if reset:
+        # Clear stale auth screens so the email field is really the GMS sign-in field
+        ad("shell", "am", "force-stop", "com.google.android.gms")
+        ad("shell", "am", "force-stop", "com.google.android.gms.ui")
+        ad("shell", "am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.HOME")
+        time.sleep(2)
     ad("shell", "am", "start", "-a", "android.settings.ADD_ACCOUNT_SETTINGS")
     pos = None
     for _ in range(12):
@@ -368,6 +369,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="read-only diagnostics")
     ap.add_argument("--email", help="target account email (default: newest entry in vault)")
+    ap.add_argument("--signin-current", action="store_true", help="type credentials into the form already on screen")
     a = ap.parse_args()
     rows = vault_run.load()
     rec = next((r for r in rows if r.get("email") == a.email), None) if a.email else rows[-1]
@@ -390,6 +392,10 @@ def main():
     v = lib_valid_until()
     print("VALID_UNTIL", datetime.datetime.fromtimestamp(v / 1000, datetime.timezone.utc).isoformat() if v else None, flush=True)
     if a.check:
+        return 0
+    if a.signin_current:
+        print("SIGNIN_CURRENT", sign_in(email, password, reset=False), flush=True)
+        print("ACCOUNTS", accounts(), flush=True)
         return 0
     if email.lower() not in [x.lower() for x in accounts()]:
         if not sign_in(email, password):
