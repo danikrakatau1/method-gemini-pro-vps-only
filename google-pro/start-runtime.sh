@@ -55,6 +55,11 @@ if ! waydroid status 2>&1 | grep -q '^Session:\s*RUNNING'; then
 fi
 
 # ADB + port forward
+waydroid container unfreeze >/dev/null 2>&1 || true
+if ! /usr/bin/adb devices 2>/dev/null | grep -q '192.168.240.112.*device'; then
+  waydroid shell -- /system/bin/sh -c 'setprop service.adb.tcp.port 5555; stop adbd; start adbd' >/dev/null 2>&1 || true
+  sleep 4
+fi
 if ! /usr/bin/adb devices 2>/dev/null | grep -q '192.168.240.112.*device'; then
   /usr/bin/adb connect 192.168.240.112:5555 >/dev/null 2>&1 || true
 fi

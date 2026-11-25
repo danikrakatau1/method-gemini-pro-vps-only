@@ -199,6 +199,9 @@ if [ "$SKIP_INIT" = "0" ] && [ ! -f /var/lib/waydroid/images/system.img ]; then
 fi
 
 echo "[9.5/9] Runtime preflight"
+for f in /var/lib/waydroid/waydroid.prop /var/lib/waydroid/waydroid_base.prop; do
+  [ -f "$f" ] && sed -i 's/^ro\.adb\.secure=1/ro.adb.secure=0/' "$f"
+done
 mkdir -p /run/user/0/pulse && touch /run/user/0/pulse/native && chmod 666 /run/user/0/pulse/native
 if ! pgrep -f "Xvfb :100" >/dev/null; then
   nohup Xvfb :100 -screen 0 1280x800x24 +extension RANDR +render -noreset \
