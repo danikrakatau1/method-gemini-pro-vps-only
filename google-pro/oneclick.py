@@ -276,6 +276,17 @@ def sign_in(email, password, reset=True):
         time.sleep(5)
         xml = dump("signinwait")
         joined = " ".join(texts(xml))
+        is_captcha = any(x in joined.lower() for x in (
+            "captcha image", "listen and type", "type the numbers you hear",
+            "not a robot", "distinguish humans from robots",
+        ))
+        if is_captcha:
+            if not captcha_printed:
+                print("CAPTCHA: selesaikan di web remote (gambar/audio), lalu lanjut.", flush=True)
+                captcha_printed = True
+            empty_pw_streak = 0
+            submitted_at = time.time()
+            continue
         if time.time() - submitted_at > 20 and edit(xml) and (edit_value(xml) or "") == "":
             empty_pw_streak += 1
             if empty_pw_streak >= 3:
