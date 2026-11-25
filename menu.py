@@ -5,6 +5,11 @@ import subprocess
 import sys
 import time
 import datetime
+import getpass
+import json
+from pathlib import Path
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 BASE = "/srv/meowtools/google-pro"
 SAVED_STDIN = None
@@ -24,6 +29,11 @@ def line():
     print("-" * 58, flush=True)
 
 
+VAULT_DIR = Path("/srv/meowtools/google-pro/.vault")
+VAULT_KEY = VAULT_DIR / "key.bin"
+VAULT_DATA = VAULT_DIR / "accounts.enc"
+
+
 def safe_load():
     try:
         return vault_run.load()
@@ -31,6 +41,26 @@ def safe_load():
         return []
     except Exception:
         return []
+
+
+def vault_save(rows):
+    VAULT_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if not VAULT_KEY.exists():
+        VAULT_KEY.write_bytes(AESGCM.generate_key(bit_length=256))
+        os.chmod(VAULT_KEY, 0o600)
+    os.chmod(VAULT_DIR, 0o700)
+    nonce = os.urandom(12)
+    ct = AESGCM(VAULT_KEY.read_bytes()).encrypt(nonce, json.dumps(rows).encode(), None)
+    VAULT_DATA.write_bytes(nonce + ct)
+    os.chmod(VAULT_DATA, 0o600)
+
+
+def vault_clear():
+    try:
+        VAULT_DATA.unlink()
+    except FileNotFoundError:
+        pass
+    print("Akun tersimpan di vault sudah dihapus.", flush=True)
 
 
 def show_status():
@@ -85,6 +115,9 @@ def ensure_google_one():
 
 def do_add_vault():
     global SAVED_STDIN, NULL_STDIN
+    print("Menu 1: akun lama di vault dan di device akan dihapus dulu.", flush=True)
+    vault_clear()
+    do_clean()
     os.dup2(SAVED_STDIN, 0)
     try:
         subprocess.run(["/usr/bin/python3", os.path.join(BASE, "vault_add.py")])
@@ -101,8 +134,33 @@ def do_login():
         return
     rec = rows[-1]
     print("Target:", rec["email"], flush=True)
-    ok = oc.sign_in(rec["email"], rec.get("password", ""))
-    print("LOGIN_RESULT:", ok, flush=True)
+    for attempt in range(6):
+        ok = oc.sign_in(rec["email"], rec.get("password", ""))
+        if ok == "WRONG_PASSWORD":
+            print("PASSWORD ANDA SALAH.", flush=True)
+            try:
+                newpw = getpass.getpass("Ketik ulang password untuk %s: " % rec["email"])
+            except EOFError:
+                newpw = ""
+            if not newpw:
+                print("Password kosong, login dibatalkan.", flush=True)
+                return
+            rec["password"] = newpw
+            rows = [r for r in safe_load() if r.get("email") != rec["email"]]
+            rows.append(rec)
+            vault_save(rows)
+            print("Password diperbarui di vault. Mencoba login lagi...", flush=True)
+            continue
+        if ok:
+            print("LOGIN_RESULT: berhasil", flush=True)
+            break
+        print("LOGIN_RESULT: gagal, coba lagi (attempt %d)" % (attempt + 1), flush=True)
+        try:
+            again = input("Ulangi login? [y/N]: ").strip().lower()
+        except EOFError:
+            again = ""
+        if not again.startswith("y"):
+            break
     print("ACCOUNTS:", oc.accounts(), flush=True)
 
 
@@ -163,9 +221,10 @@ def menu():
         print("6. Cek status", flush=True)
         print("7. Bersihkan device (fresh untuk akun baru)", flush=True)
         print("8. Keluar", flush=True)
+        print("9. Hapus akun tersimpan (vault + device)", flush=True)
         line()
         try:
-            choice = input("Pilih [1-8]: ").strip()
+            choice = input("Pilih [1-9]: ").strip()
         except EOFError:
             break
         if choice == "1":
@@ -184,6 +243,9 @@ def menu():
             do_clean()
         elif choice == "8":
             break
+        elif choice == "9":
+            vault_clear()
+            do_clean()
         else:
             print("Pilihan nggak dikenal.", flush=True)
         time.sleep(1)

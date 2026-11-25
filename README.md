@@ -63,6 +63,7 @@ Menu:
 6. Cek status
 7. Bersihkan device (fresh untuk akun baru)
 8. Keluar
+9. Hapus akun tersimpan (vault + device)
 
 Untuk pakai lama: `gas.sh` → pilih 7 → mulai lagi dari menu 1.
 

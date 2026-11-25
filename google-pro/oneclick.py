@@ -256,6 +256,15 @@ def sign_in(email, password, reset=True):
         time.sleep(5)
         xml = dump("signinwait")
         joined = " ".join(texts(xml))
+        if any(x in joined.lower() for x in (
+            "wrong password", "incorrect password", "password is incorrect",
+            "that password is wrong", "password tidak salah", "kata sandi salah",
+        )):
+            print("PASSWORD_SALAH terdeteksi dari layar Google.", flush=True)
+            return "WRONG_PASSWORD"
+        if any(x in joined.lower() for x in ("try another way", "forgot password")) and "wrong" in joined.lower():
+            print("PASSWORD_SALAH terdeteksi dari layar Google.", flush=True)
+            return "WRONG_PASSWORD"
         if "not a robot" in joined.lower() or "Confirm you" in joined:
             if not captcha_printed:
                 print("CAPTCHA: selesaikan 'Confirm you're not a robot' lewat web remote", flush=True)
