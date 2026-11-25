@@ -100,6 +100,12 @@ def accounts():
     return re.findall(r"Account \{name=([^,]+),", p)
 
 
+def focus():
+    p = ad("shell", "dumpsys", "window").stdout.decode("utf-8", "ignore")
+    m = re.search(r"mCurrentFocus=Window\{[^}]* u0 ([^/]+)/", p)
+    return m.group(1) if m else ""
+
+
 def type_secret(secret, pos=None):
     x, y = pos or (360, 470)
     ad("shell", "input", "tap", str(x), str(y))
@@ -172,16 +178,22 @@ def lib_active_for(email):
 
 
 def sign_in(email, password):
+    # Clear stale auth screens so the email field is really the GMS sign-in field
+    ad("shell", "am", "force-stop", "com.google.android.gms")
+    ad("shell", "am", "force-stop", "com.google.android.gms.ui")
+    ad("shell", "am", "start", "-a", "android.intent.action.MAIN", "-c", "android.intent.category.HOME")
+    time.sleep(2)
     ad("shell", "am", "start", "-a", "android.settings.ADD_ACCOUNT_SETTINGS")
     pos = None
     for _ in range(12):
+        f = focus()
         xml = dump("signin1")
         pos = edit(xml)
-        if pos:
+        if pos and ("gms" in f or "settings" in f):
             break
         time.sleep(5)
     if not pos:
-        print("FAIL: email field tidak muncul", flush=True)
+        print("FAIL: email field tidak muncul (focus: %s)" % focus(), flush=True)
         return False
     type_secret(email, pos)
     for _ in range(3):
