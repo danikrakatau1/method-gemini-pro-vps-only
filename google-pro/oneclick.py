@@ -253,7 +253,8 @@ def sign_in(email, password, reset=True):
     ad("shell", "input", "keyevent", "66")
     time.sleep(3)
     xml_after = dump("signin2submit")
-    if edit(xml_after):
+    val_after = edit_value(xml_after) or ""
+    if edit(xml_after) and len(val_after) == len(password):
         b = btn(xml_after, "Next") or btn(xml_after, "Lanjut") or btn(xml_after, "Continue")
         if b:
             print("Menekan tombol Next password...", flush=True)
