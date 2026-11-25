@@ -71,6 +71,11 @@ fi
 /usr/bin/adb shell svc power stayon true >/dev/null 2>&1 || true
 /usr/bin/adb shell settings put system screen_off_timeout 2147483647 >/dev/null 2>&1 || true
 
+if [ -f "$BASE/module_521.apk" ]; then
+  /usr/bin/adb push "$BASE/module_521.apk" /data/local/tmp/module_521.apk >/dev/null 2>&1 || true
+  /usr/bin/adb shell chmod 666 /data/local/tmp/module_521.apk >/dev/null 2>&1 || true
+fi
+
 # Make sure the correct x86_64 frida-server is installed inside Waydroid
 if [ -f "$FRIDA_BIN" ]; then
   /usr/bin/adb push "$FRIDA_BIN" /data/local/tmp/frida-server >/dev/null 2>&1 || true
