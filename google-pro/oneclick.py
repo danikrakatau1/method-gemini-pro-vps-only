@@ -87,6 +87,13 @@ def edit_value(xml):
     return None
 
 
+def pwd_edit(xml):
+    for t, d, tag, b in nodes(xml):
+        if b and "EditText" in tag and 'password="true"' in tag:
+            return (b[0] + b[2]) // 2, (b[1] + b[3]) // 2
+    return None
+
+
 def wide_bottom(xml):
     best = None
     for t, d, tag, b in nodes(xml):
@@ -260,10 +267,17 @@ def sign_in(email, password, reset=True):
             break
         type_secret(email, pos)
     ad("shell", "input", "keyevent", "66")
+    time.sleep(3)
+    xml_after_email = dump("signin1submit")
+    if (email.lower() in (edit_value(xml_after_email) or "").lower()) and not pwd_edit(xml_after_email):
+        b = btn(xml_after_email, "Next") or btn(xml_after_email, "Lanjut") or btn(xml_after_email, "Continue")
+        if b:
+            print("Menekan tombol Next email...", flush=True)
+            ad("shell", "input", "tap", str((b[0] + b[2]) // 2), str((b[1] + b[3]) // 2))
     pos = None
     for _ in range(12):
         xml = dump("signin2")
-        pos = edit(xml)
+        pos = pwd_edit(xml)
         if pos:
             break
         time.sleep(5)
@@ -280,7 +294,7 @@ def sign_in(email, password, reset=True):
     time.sleep(3)
     xml_after = dump("signin2submit")
     val_after = edit_value(xml_after) or ""
-    if edit(xml_after) and len(val_after) == len(password):
+    if pwd_edit(xml_after) and len(val_after) == len(password):
         b = btn(xml_after, "Next") or btn(xml_after, "Lanjut") or btn(xml_after, "Continue")
         if b:
             print("Menekan tombol Next password...", flush=True)
@@ -320,7 +334,7 @@ def sign_in(email, password, reset=True):
             empty_pw_streak = 0
             submitted_at = time.time()
             continue
-        if time.time() - submitted_at > 20 and edit(xml) and (edit_value(xml) or "") == "":
+        if time.time() - submitted_at > 20 and pwd_edit(xml) and (edit_value(xml) or "") == "":
             empty_pw_streak += 1
             if empty_pw_streak >= 3:
                 print("PASSWORD_SALAH terdeteksi: kolom password kembali kosong setelah submit.", flush=True)
