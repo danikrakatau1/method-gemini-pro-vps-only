@@ -63,7 +63,10 @@
     makePreset({ id: "ultra30tb_12m", chip: "30TB", period: "12 Months", months: 12, skuKey: "30tb", offerId: "eft-12mo", sku: "g1.play.ai.pro", token: () => TOKENS.ultra30tb_12m }),
     makePreset({ id: "ultra30tb_6m", chip: "30TB", period: "6 Months", months: 6, skuKey: "30tb", offerId: "eft-6mo", sku: "g1.play.ai.pro", token: () => TOKENS.ultra30tb_6m }),
     makePreset({ id: "ultra30tb_3m", chip: "30TB", period: "3 Months", months: 3, skuKey: "30tb", offerId: "eft-3mo", sku: "g1.play.ai.pro", token: () => TOKENS.ultra30tb_3m }),
-    makePreset({ id: "ultra30tb_1m", chip: "30TB", period: "1 Month", months: 1, skuKey: "30tb", offerId: "eft-1mo", sku: "g1.play.ai.pro", token: () => TOKENS.ultra30tb_1m })
+    makePreset({ id: "ultra30tb_1m", chip: "30TB", period: "1 Month", months: 1, skuKey: "30tb", offerId: "eft-1mo", sku: "g1.play.ai.pro", token: () => TOKENS.ultra30tb_1m }),
+    makePreset({ id: "pro12", chip: "AI Pro", period: "12 Months", months: 12, skuKey: "pro", offerId: "12months-eft", sku: "g1.2tb.ai.subs_variant", token: () => (window.__G1_TOKENS && window.__G1_TOKENS["12months-eft"]) || "" }),
+    makePreset({ id: "pro6", chip: "AI Pro", period: "+6 Months", months: 6, skuKey: "pro", offerId: "6months-eft", sku: "g1.2tb.ai.subs_variant", token: () => (window.__G1_TOKENS && window.__G1_TOKENS["6months-eft"]) || "" }),
+    makePreset({ id: "pro6b", chip: "AI Pro", period: "+6 Months (2)", months: 6, skuKey: "pro", offerId: "6months-eft-2", sku: "g1.2tb.ai.subs_variant", token: () => (window.__G1_TOKENS && window.__G1_TOKENS["6months-eft-2"]) || "" })
   ];
 
   window.G1_ZERO_COST_PRESETS = PRESETS;

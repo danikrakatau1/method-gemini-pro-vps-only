@@ -186,6 +186,24 @@ AUTO_CLEAN_ON_ADD=1              # kembalikan perilaku lama menu 1 (auto-clear)
 
 Aturan emas: sekali akun masuk, **jangan dihapus/clear lagi**. Pakai menu 6 → 3/4/5 sepuasnya.
 
+## Ekstensi Chrome — mode Pro runtime
+
+Folder `ultra inject` sekarang punya preset **AI Pro 12 / +6 / +6b** yang nggak pakai token statis:
+
+- `inject.js` memantau respons XHR/fetch dan menyimpan token `AYrTWi...` yang dikirim Google saat checkout dimuat.
+- Kalau belum ada token, preset **probe**: request diubah ke SKU `g1.2tb.ai.subs_variant` + offer `12months-eft` / `6months-eft` / `6months-eft-2`, lalu token diambil dari respons Google.
+- Token hasil tangkapan disimpan di `chrome.storage.local` (`g1CapturedTokens`) dan dipakai ulang.
+- Preset lama (20TB/30TB) tetap pakai token bawaan.
+
+Cara pakai:
+1. Load unpacked folder `ultra inject` di `chrome://extensions`
+2. Login Google One di Chrome dengan akun yang eligible
+3. Buka `one.google.com/plans`, pilih preset **AI Pro**
+4. Tunggu status "Token Google terdeteksi", lalu klik Subscribe
+5. Price guard harus hijau ($0.00 / free trial)
+
+Catatan: Google tetap yang menentukan apakah offer diberikan. Kalau akun tidak eligible, tidak ada token untuk ditangkap.
+
 ## Privasi
 
 Jangan pernah commit:

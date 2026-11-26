@@ -600,7 +600,21 @@
     if (d && d.__g1pk === 1 && d.type === "state" && d.state && d.state.mounted) {
       setStatus("Injection active ($0.00)", true, false);
     }
+    if (d && d.__g1pk === 1 && d.type === "tokens" && d.tokens) {
+      try {
+        chrome.storage.local.set({ g1CapturedTokens: d.tokens });
+      } catch (e) {}
+      const n = Object.keys(d.tokens).length;
+      setStatus("Token Google terdeteksi: " + n, true, false);
+    }
   });
+  try {
+    chrome.storage.local.get(["g1CapturedTokens"], (res) => {
+      if (res && res.g1CapturedTokens) {
+        window.postMessage({ __g1pk: 1, type: "tokens", tokens: res.g1CapturedTokens }, "*");
+      }
+    });
+  } catch (e) {}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {

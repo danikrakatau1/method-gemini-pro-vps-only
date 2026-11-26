@@ -33,17 +33,68 @@
 
   let currentTest = null;
   let subId = null;
+  const CAPTURED = {};
+  const PRO_OFFERS = ["12months-eft", "6months-eft", "6months-eft-2", "6months-eft-ss-2026"];
+
+  function captureTokens(text) {
+    if (typeof text !== "string" || text.length < 20) return;
+    const found = text.match(/AYrTWi[A-Za-z0-9+\/=_-]{80,}/g);
+    if (!found) return;
+    const low = text.toLowerCase();
+    let key = PRO_OFFERS.find((o) => low.includes(o.toLowerCase()));
+    if (!key) key = "auto";
+    if (!CAPTURED[key] || CAPTURED[key].length < found[0].length) CAPTURED[key] = found[0];
+    window.__G1_TOKENS = CAPTURED;
+    try {
+      window.postMessage({ __g1pk: 1, type: "tokens", tokens: CAPTURED }, "*");
+    } catch (e) {}
+  }
+
+  const origXhrOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (...args) {
+    this.addEventListener("load", function () {
+      try { captureTokens(this.responseText); } catch (e) {}
+    });
+    return origXhrOpen.apply(this, args);
+  };
+  const origFetch = window.fetch;
+  if (typeof origFetch === "function") {
+    window.fetch = async function (...args) {
+      const res = await origFetch.apply(this, args);
+      try {
+        const clone = res.clone();
+        clone.text().then(captureTokens).catch(() => {});
+      } catch (e) {}
+      return res;
+    };
+  }
 
   function makeItem(skuShort, token) {
     return [[PREFIX + skuShort, 21], null, null, null, 1, [token]];
   }
 
+  const PRO_SKU = "g1.2tb.ai.subs_variant";
+  const PRO_OFFER = {
+    pro12: "12months-eft", pro6: "6months-eft",
+    pro6b: "6months-eft-2", pro6c: "6months-eft-ss-2026",
+  };
+
   function makeCfg(presetId, includeYt, tokenOverride) {
-    const sku = SKUS[presetId];
-    const tok = (tokenOverride && String(tokenOverride).trim()) || TOKENS[presetId];
-    if (!sku || !tok) return null;
-    const full_items = [makeItem(sku, tok), makeItem(YT_SKU, TOKENS.yt)];
-    return { name: "g1pk_" + presetId, presetId, full_items, ear8: null, includeYt: true };
+    const isPro = String(presetId || "").startsWith("pro");
+    const sku = isPro ? PRO_SKU : SKUS[presetId];
+    const offer = isPro ? PRO_OFFER[presetId] : "";
+    const tok = (tokenOverride && String(tokenOverride).trim()) ||
+      (isPro ? CAPTURED[offer] || "" : TOKENS[presetId]);
+    if (!sku) return null;
+    if (!tok) {
+      // Mode probe: minta Google mengirim offer untuk SKU ini, lalu capture token dari respons.
+      return { name: "g1pk_" + presetId, presetId, full_items: null, probeSku: sku,
+               offer: offer || "", ear8: null, includeYt: true };
+    }
+    const full_items = [makeItem(sku, tok)];
+    if (!isPro) full_items.push(makeItem(YT_SKU, TOKENS.yt));
+    return { name: "g1pk_" + presetId, presetId, full_items, probeSku: sku,
+             offer: offer || "", ear8: null, includeYt: true };
   }
 
   function patchNode(node) {
@@ -76,8 +127,14 @@
       for (let i = 0; i < parts.length; i++) {
         if (parts[i].startsWith("f.req=")) {
           const raw = decodeURIComponent(parts[i].slice(6).replace(/\\+/g, " "));
-          const outer = JSON.parse(raw);
+          let rawText = raw;
           let changed = false;
+          if (!currentTest.full_items && currentTest.probeSku) {
+            rawText = raw.split("g1.play.ai.pro").join(currentTest.probeSku)
+                         .split("g1.play.20tb").join(currentTest.probeSku);
+            changed = rawText !== raw;
+          }
+          const outer = JSON.parse(rawText);
           if (Array.isArray(outer)) {
             for (const group of outer) {
               if (!Array.isArray(group)) continue;
@@ -112,8 +169,12 @@
   };
 
   function rewriteUrl(val) {
-    const s = String(val || "");
+    let s = String(val || "");
     if (!s.includes("/eacquire/multiline") || !currentTest) return val;
+    if (!currentTest.full_items && currentTest.probeSku) {
+      s = s.split("g1.play.ai.pro").join(currentTest.probeSku)
+          .split("g1.play.20tb").join(currentTest.probeSku);
+    }
     try {
       const u = new URL(s, location.origin);
       const earStr = u.searchParams.get("ear");
@@ -177,6 +238,11 @@
   window.addEventListener("message", (ev) => {
     const d = ev.data;
     if (!d || d.__g1pk !== 1) return;
+    if (d.type === "tokens" && d.tokens) {
+      Object.assign(CAPTURED, d.tokens);
+      window.__G1_TOKENS = CAPTURED;
+      if (currentTest) applyCfg(currentTest.presetId, true, "");
+    }
     if (d.type === "cfg") applyCfg(d.presetId, d.includeYt, d.token);
     if (d.type === "ping") {
       try {
