@@ -8,6 +8,7 @@ import os
 import re
 import shlex
 import subprocess
+import threading
 import time
 
 from flask import Flask, Response, jsonify, request
@@ -42,6 +43,7 @@ def scale_factor():
 
 _SHOT_CACHE = {"t": 0.0, "data": None}
 SHOT_TTL = float(os.environ.get("SHOT_TTL", "1.0"))
+_ADB_LOCK = threading.Lock()
 
 
 @app.get("/waydroid/api/screenshot")
@@ -51,8 +53,9 @@ def screenshot():
         return Response(_SHOT_CACHE["data"], mimetype="image/jpeg",
                         headers={"Cache-Control": "no-store"})
     try:
-        p = subprocess.run([ADB, "exec-out", "screencap", "-p"],
-                           capture_output=True, timeout=20)
+        with _ADB_LOCK:
+            p = subprocess.run([ADB, "exec-out", "screencap", "-p"],
+                               capture_output=True, timeout=20)
     except Exception as e:
         return Response(str(e)[:200], status=502, mimetype="text/plain")
     if p.returncode != 0 or not p.stdout.startswith(b"\x89PNG"):
@@ -103,11 +106,19 @@ def input_cmd():
     else:
         return jsonify({"error": "unknown action"}), 400
 
-    try:
-        p = subprocess.run([ADB] + args, capture_output=True, text=True, timeout=20)
-    except Exception as e:
-        return jsonify({"error": str(e)[:200]}), 500
-    return jsonify({"ok": p.returncode == 0, "error": p.stderr[:200]})
+    err = ""
+    for attempt in range(3):
+        try:
+            with _ADB_LOCK:
+                p = subprocess.run([ADB] + args, capture_output=True,
+                                   text=True, timeout=30)
+            err = (p.stderr or "").strip()
+            if p.returncode == 0:
+                return jsonify({"ok": True})
+        except Exception as e:
+            err = str(e)[:200]
+        time.sleep(0.4 * (attempt + 1))
+    return jsonify({"ok": False, "error": err[:200]})
 
 
 @app.get("/waydroid/remote")
@@ -135,14 +146,14 @@ const img=document.getElementById('screen'),auto=document.getElementById('auto')
 async function refresh(){img.src='/waydroid/api/screenshot?t='+Date.now()}
 document.getElementById('refresh').onclick=refresh;
 setInterval(()=>{if(auto.checked)refresh()},1800);refresh();
-async function post(body){const r=await fetch('/waydroid/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json()}
+async function post(body){const r=await fetch('/waydroid/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!j.ok){document.getElementById('coord').textContent='ERROR: '+(j.error||'gagal');}return j}
 function at(cx,cy){const r=img.getBoundingClientRect();return{x:Math.round((cx-r.left)*img.naturalWidth/r.width),y:Math.round((cy-r.top)*img.naturalHeight/r.height)}}
 let start=null;
 img.addEventListener('pointerdown',e=>{e.preventDefault();start={cx:e.clientX,cy:e.clientY};img.setPointerCapture(e.pointerId)});
 img.addEventListener('pointerup',e=>{e.preventDefault();if(!start)return;const a=start;start=null;const dx=e.clientX-a.cx,dy=e.clientY-a.cy,p=at(e.clientX,e.clientY);
 if(Math.abs(dx)>14||Math.abs(dy)>14){const q=at(a.cx,a.cy);document.getElementById('coord').textContent=q.x+','+q.y+' -> '+p.x+','+p.y;post({action:'swipe',x1:q.x,y1:q.y,x2:p.x,y2:p.y,duration:500}).then(()=>{setTimeout(refresh,800);setTimeout(refresh,1600)})}
 else{document.getElementById('coord').textContent=p.x+','+p.y;post({action:'tap',x:p.x,y:p.y}).then(()=>{setTimeout(refresh,800);setTimeout(refresh,1600)})}});
-document.getElementById('sendText').onclick=async()=>{const v=document.getElementById('txt').value;if(v){await post({action:'text',value:v});document.getElementById('txt').value='';setTimeout(refresh,800)}};
+document.getElementById('sendText').onclick=async()=>{const b=document.getElementById('sendText'),v=document.getElementById('txt').value;if(!v)return;b.disabled=true;try{await post({action:'text',value:v});document.getElementById('txt').value='';setTimeout(refresh,800)}finally{b.disabled=false}};
 document.getElementById('sendKey').onclick=async()=>{const v=document.getElementById('key').value.trim();if(v){await post({action:'keyevent',key:v});setTimeout(refresh,800)}};
 </script></body></html>'''
     return Response(html, mimetype="text/html")
