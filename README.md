@@ -167,6 +167,25 @@ cd waydroid-toolkit && ./install.sh
 
 Lalu pilih menu 1 (tambah akun), 2 (login), 6 (cek), 3/4/5 (klaim), 7/9 (bersih).
 
+## Biar awet (anti-flag)
+
+- Menu 1 **tidak lagi menghapus** vault/akun otomatis. Akun lama tetap dipakai. Kalau mau bersih, pakai menu 7 atau 9.
+- Menu 2 **skip sign-in** kalau akun sudah ada di device.
+- Menu 2 maksimal **2 attempt**, lalu aktifkan cooldown otomatis.
+- Cooldown default 30 menit setelah gagal, atau **72 jam** kalau Google menyebut recovery / couldn't verify.
+- Menu 3/4/5 menolak klaim kalau akun belum login — nggak memaksa login.
+
+Environment:
+
+```
+LOGIN_COOLDOWN=1800              # detik, default 30 menit
+LOGIN_COOLDOWN_LONG=259200       # detik, default 72 jam
+FORCE_LOGIN=1                    # lewati cooldown (hati-hati)
+AUTO_CLEAN_ON_ADD=1              # kembalikan perilaku lama menu 1 (auto-clear)
+```
+
+Aturan emas: sekali akun masuk, **jangan dihapus/clear lagi**. Pakai menu 6 → 3/4/5 sepuasnya.
+
 ## Privasi
 
 Jangan pernah commit:

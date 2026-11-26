@@ -32,6 +32,10 @@ def line():
 VAULT_DIR = Path(BASE) / ".vault"
 VAULT_KEY = VAULT_DIR / "key.bin"
 VAULT_DATA = VAULT_DIR / "accounts.enc"
+STATE_DIR = Path(BASE).parent / ".state"
+LOGIN_STATE = STATE_DIR / "login.json"
+LOGIN_COOLDOWN = int(os.environ.get("LOGIN_COOLDOWN", "1800"))
+AUTO_CLEAN_ON_ADD = os.environ.get("AUTO_CLEAN_ON_ADD", "0") == "1"
 
 
 def safe_load():
@@ -61,6 +65,40 @@ def vault_clear():
     except FileNotFoundError:
         pass
     print("Akun tersimpan di vault sudah dihapus.", flush=True)
+
+
+def login_wait_left():
+    if os.environ.get("FORCE_LOGIN") == "1":
+        return 0
+    try:
+        d = json.loads(LOGIN_STATE.read_text())
+        return max(0, int(d.get("cooldown_until", 0)) - int(time.time()))
+    except Exception:
+        return 0
+
+
+def mark_login(ok, reason=""):
+    STATE_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    secs = 0
+    if not ok:
+        low = reason.lower()
+        if "72" in low or "recover" in low or "couldn" in low or "verify" in low:
+            secs = int(os.environ.get("LOGIN_COOLDOWN_LONG", str(72 * 3600)))
+        else:
+            secs = LOGIN_COOLDOWN
+    LOGIN_STATE.write_text(json.dumps({
+        "last_attempt": int(time.time()),
+        "cooldown_until": int(time.time()) + secs,
+        "ok": bool(ok),
+        "reason": reason[:160],
+    }))
+    os.chmod(LOGIN_STATE, 0o600)
+    if secs:
+        print("Cooldown login %d menit aktif. Jangan ulang menu 2 dulu." % (secs // 60), flush=True)
+
+
+def format_wait(secs):
+    return "%d jam %d menit" % (secs // 3600, (secs % 3600) // 60)
 
 
 def show_status():
@@ -115,9 +153,12 @@ def ensure_google_one():
 
 def do_add_vault():
     global SAVED_STDIN, NULL_STDIN
-    print("Menu 1: akun lama di vault dan di device akan dihapus dulu.", flush=True)
-    vault_clear()
-    do_clean()
+    if AUTO_CLEAN_ON_ADD:
+        print("Menu 1 (AUTO_CLEAN_ON_ADD=1): akun lama di vault dan device dihapus dulu.", flush=True)
+        vault_clear()
+        do_clean()
+    else:
+        print("Mode awet: vault/akun lama tidak dihapus. Pakai menu 7/9 kalau mau bersih.", flush=True)
     os.dup2(SAVED_STDIN, 0)
     try:
         subprocess.run(["/usr/bin/python3", os.path.join(BASE, "vault_add.py")])
@@ -133,36 +174,49 @@ def do_login():
         print("Vault kosong. Pilih menu 1 dulu.", flush=True)
         return
     rec = rows[-1]
-    print("Target:", rec["email"], flush=True)
+    email = rec["email"]
+    print("Target:", email, flush=True)
+    if email.lower() in [a.lower() for a in oc.accounts()]:
+        print("AKUN SUDAH LOGIN di device — skip sign-in (biar awet).", flush=True)
+        print("ACCOUNTS:", oc.accounts(), flush=True)
+        return
+    left = login_wait_left()
+    if left:
+        print("LOGIN DITUNDA karena cooldown. Sisa:", format_wait(left), flush=True)
+        print("Jangan ulang menu 2 dulu — itu yang bikin Google makin curiga.", flush=True)
+        print("Lewati dengan FORCE_LOGIN=1 kalau kamu yakin.", flush=True)
+        return
     print("Menu 2: email/password diketik otomatis. Yang manual hanya CAPTCHA/2FA.", flush=True)
     oc.remote_help()
-    for attempt in range(6):
-        ok = oc.sign_in(rec["email"], rec.get("password", ""))
+    for attempt in range(2):
+        ok = oc.sign_in(email, rec.get("password", ""))
         if ok == "WRONG_PASSWORD":
             print("PASSWORD ANDA SALAH.", flush=True)
             try:
-                newpw = getpass.getpass("Ketik ulang password untuk %s: " % rec["email"])
+                newpw = getpass.getpass("Ketik ulang password untuk %s: " % email)
             except EOFError:
                 newpw = ""
             if not newpw:
-                print("Password kosong, login dibatalkan.", flush=True)
+                print("Password kosong, dibatalkan.", flush=True)
+                mark_login(False, "password kosong")
                 return
             rec["password"] = newpw
-            rows = [r for r in safe_load() if r.get("email") != rec["email"]]
+            rows = [r for r in safe_load() if r.get("email") != email]
             rows.append(rec)
             vault_save(rows)
-            print("Password diperbarui di vault. Mencoba login lagi...", flush=True)
+            print("Password diperbarui di vault. Satu percobaan terakhir...", flush=True)
             continue
         if ok:
+            mark_login(True)
             print("LOGIN_RESULT: berhasil", flush=True)
             break
-        print("LOGIN_RESULT: gagal, coba lagi (attempt %d)" % (attempt + 1), flush=True)
-        try:
-            again = input("Ulangi login? [y/N]: ").strip().lower()
-        except EOFError:
-            again = ""
-        if not again.startswith("y"):
-            break
+        screen = " ".join(oc.texts(oc.dump("loginfail")))
+        mark_login(False, screen)
+        print("LOGIN_RESULT: gagal. Cooldown aktif, jangan diulang.", flush=True)
+        break
+    else:
+        mark_login(False, "dua kali password salah")
+        print("LOGIN_RESULT: gagal setelah 2 attempt. Cooldown aktif.", flush=True)
     print("ACCOUNTS:", oc.accounts(), flush=True)
 
 
@@ -172,6 +226,10 @@ def do_claim(plan, stack):
         print("Vault kosong. Pilih menu 1 dulu.", flush=True)
         return
     rec = rows[-1]
+    email = rec["email"]
+    if email.lower() not in [a.lower() for a in oc.accounts()]:
+        print("Akun %s belum login di device. Jalankan menu 2 dulu." % email, flush=True)
+        return
     ultra0.ADB = ultra0.find_adb()
     ultra0.SERIAL = oc.SERIAL
     if not ensure_google_one():
