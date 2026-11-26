@@ -8,6 +8,7 @@ import os
 import re
 import shlex
 import subprocess
+import time
 
 from flask import Flask, Response, jsonify, request
 
@@ -39,8 +40,16 @@ def scale_factor():
     return min(SHOT_W / lw, SHOT_H / lh)
 
 
+_SHOT_CACHE = {"t": 0.0, "data": None}
+SHOT_TTL = float(os.environ.get("SHOT_TTL", "1.0"))
+
+
 @app.get("/waydroid/api/screenshot")
 def screenshot():
+    now = time.monotonic()
+    if _SHOT_CACHE["data"] and now - _SHOT_CACHE["t"] < SHOT_TTL:
+        return Response(_SHOT_CACHE["data"], mimetype="image/jpeg",
+                        headers={"Cache-Control": "no-store"})
     try:
         p = subprocess.run([ADB, "exec-out", "screencap", "-p"],
                            capture_output=True, timeout=20)
@@ -52,8 +61,10 @@ def screenshot():
     img = Image.open(io.BytesIO(p.stdout)).convert("RGB")
     img.thumbnail((SHOT_W, SHOT_H), Image.LANCZOS)
     buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=68, optimize=True)
-    return Response(buf.getvalue(), mimetype="image/jpeg",
+    img.save(buf, format="JPEG", quality=55, optimize=True)
+    _SHOT_CACHE["data"] = buf.getvalue()
+    _SHOT_CACHE["t"] = time.monotonic()
+    return Response(_SHOT_CACHE["data"], mimetype="image/jpeg",
                     headers={"Cache-Control": "no-store"})
 
 
@@ -123,7 +134,7 @@ small{color:#8e98ad;display:block;margin-top:8px}
 const img=document.getElementById('screen'),auto=document.getElementById('auto');
 async function refresh(){img.src='/waydroid/api/screenshot?t='+Date.now()}
 document.getElementById('refresh').onclick=refresh;
-setInterval(()=>{if(auto.checked)refresh()},900);refresh();
+setInterval(()=>{if(auto.checked)refresh()},1800);refresh();
 async function post(body){const r=await fetch('/waydroid/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json()}
 function at(cx,cy){const r=img.getBoundingClientRect();return{x:Math.round((cx-r.left)*img.naturalWidth/r.width),y:Math.round((cy-r.top)*img.naturalHeight/r.height)}}
 let start=null;
