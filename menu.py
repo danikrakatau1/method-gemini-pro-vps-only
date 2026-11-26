@@ -134,6 +134,8 @@ def do_login():
         return
     rec = rows[-1]
     print("Target:", rec["email"], flush=True)
+    print("Menu 2: email/password diketik otomatis. Yang manual hanya CAPTCHA/2FA.", flush=True)
+    oc.remote_help()
     for attempt in range(6):
         ok = oc.sign_in(rec["email"], rec.get("password", ""))
         if ok == "WRONG_PASSWORD":

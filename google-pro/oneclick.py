@@ -159,6 +159,23 @@ def billing_hash(email):
     return base64.urlsafe_b64encode(hashlib.sha256(email.encode()).digest()).decode().rstrip("=")
 
 
+def remote_help():
+    root = os.environ.get("MTOOL_ROOT", "/srv/meowtools")
+    tail = os.environ.get("TAILSCALE_IP", "")
+    vps = os.environ.get("VPS_IP", "")
+    print("PANEL REMOTE (dipakai kalau ada CAPTCHA / verifikasi):", flush=True)
+    if tail:
+        print("  Tailscale : http://%s:8765/waydroid/remote" % tail, flush=True)
+    else:
+        print("  Tailscale : http://<IP_TAILSCALE_VPS>:8765/waydroid/remote", flush=True)
+    if vps:
+        print("  SSH tunnel: ssh -L 8765:127.0.0.1:8765 root@%s" % vps, flush=True)
+    else:
+        print("  SSH tunnel: ssh -L 8765:127.0.0.1:8765 root@<IP_VPS>", flush=True)
+    print("  Browser   : http://127.0.0.1:8765/waydroid/remote", flush=True)
+    print("  Password panel: %s/waydroid-web/password.txt (jangan di-chat)" % root, flush=True)
+
+
 def check_billing_account(email):
     ad("shell", "am", "force-stop", "com.google.android.apps.subscriptions.red")
     subprocess.run(["waydroid", "app", "launch", "com.google.android.apps.subscriptions.red"], capture_output=True, timeout=60)
@@ -269,26 +286,36 @@ def sign_in(email, password, reset=True):
             print("Menekan tombol Next password...", flush=True)
             ad("shell", "input", "tap", str((b[0] + b[2]) // 2), str((b[1] + b[3]) // 2))
     print("MENUNGGU verifikasi 2FA di HP kamu (bisa sampai 5 menit)...", flush=True)
+    remote_help()
     code_printed = False
     captcha_printed = False
     submitted_at = time.time()
     empty_pw_streak = 0
+    screen_tick = 0
     for _ in range(60):
         time.sleep(5)
         xml = dump("signinwait")
         joined = " ".join(texts(xml))
+        screen_tick += 1
+        if screen_tick % 6 == 0:
+            visible = [t for t in texts(xml) if t and not set(t) <= {"•"}]
+            if visible:
+                print("LAYAR SAAT INI: " + " | ".join(visible)[:260], flush=True)
         is_captcha = any(x in joined.lower() for x in (
             "captcha image", "listen and type", "type the numbers you hear",
             "not a robot", "distinguish humans from robots",
         ))
         if "account recovery" in joined.lower() or "last password you remember" in joined.lower():
-            print("GOOGLE MEMINTA ACCOUNT RECOVERY.", flush=True)
+            print("LAYAR: GOOGLE MEMINTA ACCOUNT RECOVERY.", flush=True)
             print("Selesaikan manual di web remote (password terakhir yang kamu ingat),", flush=True)
             print("atau ulang dari menu 1 dengan password Google terbaru di vault.", flush=True)
+            remote_help()
             return False
         if is_captcha:
             if not captcha_printed:
-                print("CAPTCHA: selesaikan di web remote (gambar/audio), lalu lanjut.", flush=True)
+                print("LAYAR: CAPTCHA muncul. Selesaikan di web remote (gambar/audio),", flush=True)
+                print("lalu tekan Next — script akan lanjut otomatis.", flush=True)
+                remote_help()
                 captcha_printed = True
             empty_pw_streak = 0
             submitted_at = time.time()
@@ -311,16 +338,21 @@ def sign_in(email, password, reset=True):
             return "WRONG_PASSWORD"
         if "not a robot" in joined.lower() or "Confirm you" in joined:
             if not captcha_printed:
-                print("CAPTCHA: selesaikan 'Confirm you're not a robot' lewat web remote", flush=True)
+                print("LAYAR: CAPTCHA 'Confirm you're not a robot'. Selesaikan di web remote.", flush=True)
+                remote_help()
                 captcha_printed = True
             continue
         if "Couldn’t sign you in" in joined or "couldn't verify this account belongs to you" in joined or "Try again later" in joined:
-            print("FAIL: Google menolak verifikasi akun (anti-automation). Tunggu beberapa jam lalu coba lagi.", flush=True)
+            print("LAYAR: Google menolak verifikasi (anti-automation).", flush=True)
+            print("Coba lagi setelah beberapa saat, atau login manual lewat panel remote.", flush=True)
+            remote_help()
             return False
         if "Verify it's you" in joined or "Check your phone" in joined:
             if not code_printed:
                 code = next((t for t in texts(xml) if re.fullmatch(r"\d{1,3}", t)), None)
-                print("LAYAR VERIFIKASI: tap angka di bawah ini di HP kamu ->", code, flush=True)
+                print("LAYAR: VERIFIKASI 2FA di HP kamu.", flush=True)
+                print("Buka notifikasi Google di HP, lalu tap angka ini ->", code, flush=True)
+                remote_help()
                 code_printed = True
             continue
         b = btn(xml, "I agree") or btn(xml, "Setuju")
