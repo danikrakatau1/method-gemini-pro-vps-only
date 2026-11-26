@@ -58,13 +58,16 @@ fi
 
 # ADB + port forward
 waydroid container unfreeze >/dev/null 2>&1 || true
-if ! /usr/bin/adb devices 2>/dev/null | grep -q '192.168.240.112.*device'; then
-  waydroid shell -- /system/bin/sh -c 'setprop service.adb.tcp.port 5555; stop adbd; start adbd' >/dev/null 2>&1 || true
-  sleep 4
-fi
-if ! /usr/bin/adb devices 2>/dev/null | grep -q '192.168.240.112.*device'; then
+for i in 1 2 3 4 5; do
+  if /usr/bin/adb devices 2>/dev/null | grep -qE '192\.168\.240\.112:5555[[:space:]]+device$'; then
+    break
+  fi
+  waydroid shell -- /system/bin/sh -c 'chown root:shell /data/misc/adb/adb_keys; chmod 600 /data/misc/adb/adb_keys; setprop service.adb.tcp.port 5555; stop adbd; start adbd' >/dev/null 2>&1 || true
+  /usr/bin/adb disconnect 192.168.240.112:5555 >/dev/null 2>&1 || true
+  sleep 2
   /usr/bin/adb connect 192.168.240.112:5555 >/dev/null 2>&1 || true
-fi
+  sleep 2
+done
 /usr/bin/adb forward tcp:27042 tcp:27042 >/dev/null 2>&1 || true
 /usr/bin/adb shell wm size 720x1280 >/dev/null 2>&1 || true
 /usr/bin/adb shell wm density 240 >/dev/null 2>&1 || true
