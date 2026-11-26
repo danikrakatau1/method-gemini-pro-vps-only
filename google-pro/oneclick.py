@@ -456,7 +456,7 @@ def claim(plan, stack, password):
         if "Payment methods" not in joined:
             break
         target = None
-        for needle in ("GoPay:", "3 0", "Tri"):
+        for needle in ("3 0", "GoPay:", "Tri"):
             for t, d, tag, b in nodes(xml):
                 if not b or 'clickable="true"' not in tag:
                     continue
