@@ -477,6 +477,15 @@ def claim(plan, stack, password):
         xml = dump(f"sheet-{plan}-{pick_try}")
         joined = " ".join(dict.fromkeys(texts(xml)))
         print("SHEET", joined[:300], flush=True)
+    if "Continue to GoPay" in joined or "re-directed to GoPay" in joined:
+        print("Lanjut verifikasi GoPay...", flush=True)
+        b = btn(xml, "Continue to GoPay")
+        if b:
+            ad("shell", "input", "tap", str((b[0] + b[2]) // 2), str((b[1] + b[3]) // 2))
+        time.sleep(10)
+        xml = dump(f"sheet-{plan}-gopay")
+        joined = " ".join(dict.fromkeys(texts(xml)))
+        print("SHEET", joined[:300], flush=True)
     if not stack and "free trial" not in joined.lower() and "Today Rp 0" not in joined:
         print("FAIL: sheet bukan uji coba gratis — dibatalkan supaya nggak kena tagihan", flush=True)
         return False
