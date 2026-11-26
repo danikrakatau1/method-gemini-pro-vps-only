@@ -174,13 +174,13 @@ small{color:#8e98ad;display:block;margin-top:8px}
 <img id="screen" alt="Waydroid screen">
 <div class="bar"><input id="txt" placeholder="Teks / kata sandi" autocomplete="off"><button id="sendText">Kirim teks</button></div>
 <div class="bar"><input id="key" placeholder="KEYCODE, mis. KEYCODE_BACK"><button id="sendKey">Keyevent</button></div>
-<div class="bar"><button id="refresh">Ambil screenshot</button><button id="live">Live ~8fps</button><button id="still">Mode screenshot</button><label style="font-size:12px;color:#8e98ad;display:flex;align-items:center;gap:6px"><input id="auto" type="checkbox" style="flex:0;min-width:0"> Auto refresh</label><span id="coord" style="font:12px ui-monospace,monospace;color:#d8b878"></span></div>
+<div class="bar"><button id="refresh">Ambil screenshot</button><button id="live">Live ~8fps (tab baru)</button><button id="still">Mode screenshot</button><label style="font-size:12px;color:#8e98ad;display:flex;align-items:center;gap:6px"><input id="auto" type="checkbox" style="flex:0;min-width:0"> Auto refresh</label><span id="coord" style="font:12px ui-monospace,monospace;color:#d8b878"></span></div>
 <small>Tekan atau geser gambar untuk kirim tap/swipe. Jangan taruh rahasia di chat.</small>
 <script>
 const img=document.getElementById('screen'),auto=document.getElementById('auto');
 async function refresh(){img.src='/waydroid/api/screenshot?t='+Date.now()}
 document.getElementById('refresh').onclick=refresh;
-document.getElementById('live').onclick=()=>{auto.checked=false;img.src='/waydroid/api/mjpeg'};
+document.getElementById('live').onclick=()=>{auto.checked=false;window.open('/waydroid/api/mjpeg?t='+Date.now(),'_blank')};
 document.getElementById('still').onclick=()=>{img.src='';refresh()};
 setInterval(()=>{if(auto.checked)refresh()},1800);refresh();
 async function post(body){const r=await fetch('/waydroid/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!j.ok){document.getElementById('coord').textContent='ERROR: '+(j.error||'gagal');}return j}
