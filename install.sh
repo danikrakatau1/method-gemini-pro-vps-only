@@ -56,8 +56,8 @@ if [ "$SKIP_APT" = "0" ]; then
     echo "deb [signed-by=/usr/share/keyrings/waydroid.gpg] https://repo.waydro.id/ $CODENAME main" \
       > /etc/apt/sources.list.d/waydroid.list
     apt-get update -qq
-    apt-get install -y -qq waydroid lxc weston
-  fi
+fi
+apt-get install -y -qq waydroid lxc weston
 else
   echo "SKIP_APT=1, lewati apt."
 fi
