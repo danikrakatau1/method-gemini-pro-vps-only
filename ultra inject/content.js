@@ -602,16 +602,16 @@
     }
     if (d && d.__g1pk === 1 && d.type === "tokens" && d.tokens) {
       try {
-        chrome.storage.local.set({ g1CapturedTokens: d.tokens });
+        chrome.storage.local.set({ g1CapturedTokensV2: d.tokens });
       } catch (e) {}
       const n = Object.keys(d.tokens).length;
       setStatus("Token Google terdeteksi: " + n, true, false);
     }
   });
   try {
-    chrome.storage.local.get(["g1CapturedTokens"], (res) => {
-      if (res && res.g1CapturedTokens) {
-        window.postMessage({ __g1pk: 1, type: "tokens", tokens: res.g1CapturedTokens }, "*");
+    chrome.storage.local.get(["g1CapturedTokensV2"], (res) => {
+      if (res && res.g1CapturedTokensV2) {
+        window.postMessage({ __g1pk: 1, type: "tokens", tokens: res.g1CapturedTokensV2 }, "*");
       }
     });
   } catch (e) {}

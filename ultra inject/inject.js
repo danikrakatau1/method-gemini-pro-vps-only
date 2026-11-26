@@ -73,7 +73,7 @@
     return [[PREFIX + skuShort, 21], null, null, null, 1, [token]];
   }
 
-  const PRO_SKU = "g1.2tb.ai.subs_variant";
+  const PRO_SKU = "g1.play.ai.pro";
   const PRO_OFFER = {
     pro12: "12months-eft", pro6: "6months-eft",
     pro6b: "6months-eft-2", pro6c: "6months-eft-ss-2026",

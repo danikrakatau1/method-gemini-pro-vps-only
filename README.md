@@ -191,8 +191,8 @@ Aturan emas: sekali akun masuk, **jangan dihapus/clear lagi**. Pakai menu 6 → 
 Folder `ultra inject` sekarang punya preset **AI Pro 12 / +6 / +6b** yang nggak pakai token statis:
 
 - `inject.js` memantau respons XHR/fetch dan menyimpan token `AYrTWi...` yang dikirim Google saat checkout dimuat.
-- Kalau belum ada token, preset **probe**: request diubah ke SKU `g1.2tb.ai.subs_variant` + offer `12months-eft` / `6months-eft` / `6months-eft-2`, lalu token diambil dari respons Google.
-- Token hasil tangkapan disimpan di `chrome.storage.local` (`g1CapturedTokens`) dan dipakai ulang.
+- Kalau belum ada token, preset **probe**: request diubah ke SKU web `g1.play.ai.pro` + offer `12months-eft` / `6months-eft` / `6months-eft-2`, lalu token diambil dari respons Google.
+- Token hasil tangkapan disimpan di `chrome.storage.local` (`g1CapturedTokensV2`) dan dipakai ulang.
 - Preset lama (20TB/30TB) tetap pakai token bawaan.
 
 Cara pakai:
