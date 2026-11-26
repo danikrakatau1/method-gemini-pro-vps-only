@@ -71,6 +71,38 @@ def screenshot():
                     headers={"Cache-Control": "no-store"})
 
 
+@app.get("/waydroid/api/mjpeg")
+def mjpeg():
+    env = os.environ.copy()
+    env["DISPLAY"] = ":100"
+    cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error",
+           "-f", "x11grab", "-video_size", "1280x800", "-framerate", "12",
+           "-i", ":100", "-vf", "scale=540:-1", "-f", "mjpeg", "-q:v", "8", "pipe:1"]
+
+    def gen():
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env)
+        buf = b""
+        try:
+            while True:
+                chunk = p.stdout.read(4096)
+                if not chunk:
+                    break
+                buf += chunk
+                while b"\xff\xd8" in buf and b"\xff\xd9" in buf:
+                    start = buf.find(b"\xff\xd8")
+                    end = buf.find(b"\xff\xd9", start)
+                    if end < 0:
+                        break
+                    frame = buf[start:end + 2]
+                    buf = buf[end + 2:]
+                    yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" +
+                           frame + b"\r\n")
+        finally:
+            p.kill()
+
+    return Response(gen(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+
 @app.post("/waydroid/api/input")
 def input_cmd():
     d = request.get_json(silent=True) or {}
@@ -139,12 +171,14 @@ small{color:#8e98ad;display:block;margin-top:8px}
 <img id="screen" alt="Waydroid screen">
 <div class="bar"><input id="txt" placeholder="Teks / kata sandi" autocomplete="off"><button id="sendText">Kirim teks</button></div>
 <div class="bar"><input id="key" placeholder="KEYCODE, mis. KEYCODE_BACK"><button id="sendKey">Keyevent</button></div>
-<div class="bar"><button id="refresh">Ambil screenshot</button><label style="font-size:12px;color:#8e98ad;display:flex;align-items:center;gap:6px"><input id="auto" type="checkbox" style="flex:0;min-width:0"> Auto refresh</label><span id="coord" style="font:12px ui-monospace,monospace;color:#d8b878"></span></div>
+<div class="bar"><button id="refresh">Ambil screenshot</button><button id="live">Live ~12fps</button><button id="still">Mode screenshot</button><label style="font-size:12px;color:#8e98ad;display:flex;align-items:center;gap:6px"><input id="auto" type="checkbox" style="flex:0;min-width:0"> Auto refresh</label><span id="coord" style="font:12px ui-monospace,monospace;color:#d8b878"></span></div>
 <small>Tekan atau geser gambar untuk kirim tap/swipe. Jangan taruh rahasia di chat.</small>
 <script>
 const img=document.getElementById('screen'),auto=document.getElementById('auto');
 async function refresh(){img.src='/waydroid/api/screenshot?t='+Date.now()}
 document.getElementById('refresh').onclick=refresh;
+document.getElementById('live').onclick=()=>{auto.checked=false;img.src='/waydroid/api/mjpeg'};
+document.getElementById('still').onclick=()=>{img.src='';refresh()};
 setInterval(()=>{if(auto.checked)refresh()},1800);refresh();
 async function post(body){const r=await fetch('/waydroid/api/input',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!j.ok){document.getElementById('coord').textContent='ERROR: '+(j.error||'gagal');}return j}
 function at(cx,cy){const r=img.getBoundingClientRect();return{x:Math.round((cx-r.left)*img.naturalWidth/r.width),y:Math.round((cy-r.top)*img.naturalHeight/r.height)}}
