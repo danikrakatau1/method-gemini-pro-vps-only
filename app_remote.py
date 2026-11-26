@@ -76,8 +76,8 @@ def mjpeg():
     env = os.environ.copy()
     env["DISPLAY"] = ":100"
     cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error",
-           "-f", "x11grab", "-video_size", "1280x800", "-framerate", "12",
-           "-i", ":100", "-vf", "scale=540:-1", "-f", "mjpeg", "-q:v", "8", "pipe:1"]
+           "-f", "x11grab", "-video_size", "1280x800", "-framerate", "8",
+           "-i", ":100", "-vf", "scale=480:-1", "-f", "mjpeg", "-q:v", "10", "pipe:1"]
 
     def gen():
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env)
@@ -101,7 +101,9 @@ def mjpeg():
         finally:
             p.kill()
 
-    return Response(gen(), mimetype="multipart/x-mixed-replace; boundary=frame")
+    return Response(gen(), mimetype="multipart/x-mixed-replace; boundary=frame",
+                    headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no",
+                             "Connection": "close"})
 
 
 @app.post("/waydroid/api/input")
@@ -172,7 +174,7 @@ small{color:#8e98ad;display:block;margin-top:8px}
 <img id="screen" alt="Waydroid screen">
 <div class="bar"><input id="txt" placeholder="Teks / kata sandi" autocomplete="off"><button id="sendText">Kirim teks</button></div>
 <div class="bar"><input id="key" placeholder="KEYCODE, mis. KEYCODE_BACK"><button id="sendKey">Keyevent</button></div>
-<div class="bar"><button id="refresh">Ambil screenshot</button><button id="live">Live ~12fps</button><button id="still">Mode screenshot</button><label style="font-size:12px;color:#8e98ad;display:flex;align-items:center;gap:6px"><input id="auto" type="checkbox" style="flex:0;min-width:0"> Auto refresh</label><span id="coord" style="font:12px ui-monospace,monospace;color:#d8b878"></span></div>
+<div class="bar"><button id="refresh">Ambil screenshot</button><button id="live">Live ~8fps</button><button id="still">Mode screenshot</button><label style="font-size:12px;color:#8e98ad;display:flex;align-items:center;gap:6px"><input id="auto" type="checkbox" style="flex:0;min-width:0"> Auto refresh</label><span id="coord" style="font:12px ui-monospace,monospace;color:#d8b878"></span></div>
 <small>Tekan atau geser gambar untuk kirim tap/swipe. Jangan taruh rahasia di chat.</small>
 <script>
 const img=document.getElementById('screen'),auto=document.getElementById('auto');
