@@ -81,6 +81,7 @@ def mjpeg():
 
     def gen():
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=env)
+        assert p.stdout is not None
         buf = b""
         try:
             while True:
