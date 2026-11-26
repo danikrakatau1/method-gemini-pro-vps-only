@@ -1,0 +1,67 @@
+{
+  "manifest_version": 3,
+  "name": "Google One Ultra Injector",
+  "version": "1.1",
+  "description": "Google One Ultra (20TB & 30TB) Offer Injector with YouTube Premium bundle - Free trial activation up to 12 months.",
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://one.google.com/*",
+    "https://payments.google.com/*",
+    "https://tokenized.play.google.com/*",
+    "https://play.google.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Google One Ultra Injector",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": [
+        "https://one.google.com/*",
+        "https://payments.google.com/*"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://one.google.com/*"],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://one.google.com/*",
+        "https://payments.google.com/*"
+      ],
+      "js": ["presets.js", "content.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://tokenized.play.google.com/*"],
+      "js": ["play_guard.js"],
+      "run_at": "document_idle",
+      "world": "MAIN",
+      "all_frames": true
+    }
+  ]
+}
