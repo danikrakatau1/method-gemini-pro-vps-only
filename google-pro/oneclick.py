@@ -20,7 +20,7 @@ import sys
 import time
 import html as htmlmod
 
-BASE = "/srv/meowtools/google-pro"
+BASE = os.environ.get("MTOOL_ROOT", "/srv/meowtools") + "/google-pro"
 os.environ["ADB_PATH"] = os.path.join(BASE, "adb-waydroid")
 os.environ["PYTHONIOENCODING"] = "utf-8"
 os.environ["FRIDA_ARCH"] = "x86_64"
@@ -31,7 +31,8 @@ import vault_run
 
 SERIAL = "192.168.240.112:5555"
 ADB = ["/usr/bin/adb", "-s", SERIAL]
-SCRATCH = "/root/.hermes/cache/scratch"
+SCRATCH = os.environ.get("SCRATCH_DIR", os.path.expanduser("~/.hermes/cache/scratch"))
+os.makedirs(SCRATCH, exist_ok=True)
 TARGET_HASH = None
 
 

@@ -13,7 +13,7 @@ from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-VAULT = Path("/srv/meowtools/google-pro/.vault")
+VAULT = Path(os.environ.get("MTOOL_ROOT", "/srv/meowtools")) / "google-pro" / ".vault"
 KEY = VAULT / "key.bin"
 DATA = VAULT / "accounts.enc"
 

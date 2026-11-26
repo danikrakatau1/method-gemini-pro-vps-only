@@ -4,6 +4,6 @@
 # Default: akun terakhir di vault. Ganti dengan: ./gas.sh --email nama@gmail.com
 # Cek aman tanpa beli: ./gas.sh --check
 set -e
-BASE=/srv/meowtools/google-pro
+BASE="${GOOGLE_PRO_DIR:-${MTOOL_ROOT:-/srv/meowtools}/google-pro}"
 cd "$BASE"
 exec /usr/bin/python3 "$BASE/oneclick.py" "$@"

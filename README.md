@@ -139,6 +139,34 @@ lewat internet biasa.
 - Tidak bisa dijalankan langsung di Termux/HP non-root sebagai engine.
 - Google dapat meminta verifikasi kapan saja; itu tetap manual.
 
+## Dipakai banyak orang
+
+Tiap orang pakai VPS-nya sendiri dan vaultnya sendiri. Tidak ada kredensial bersama.
+
+Syarat tiap VPS:
+- x86_64, virtualisasi KVM, cgroup v2, `CONFIG_MEMFD_CREATE=y`
+- minimal 2 vCPU / 4 GB RAM
+- akses root
+- HP Indonesia untuk verifikasi Google (CAPTCHA/2FA)
+- akun Google dengan profil pembayaran Indonesia jika mau harga Rp 309.000
+
+Semua path bisa diubah lewat environment tanpa edit script:
+
+```
+export MTOOL_ROOT=/srv/meowtools        # default
+export SCRATCH_DIR=$HOME/.hermes/cache/scratch  # default
+```
+
+Alur untuk tiap orang:
+
+```
+git clone https://github.com/danikrakatau1/method-gemini-pro-vps-only.git waydroid-toolkit
+cd waydroid-toolkit && ./install.sh
+/srv/meowtools/gas.sh
+```
+
+Lalu pilih menu 1 (tambah akun), 2 (login), 6 (cek), 3/4/5 (klaim), 7/9 (bersih).
+
 ## Privasi
 
 Jangan pernah commit:

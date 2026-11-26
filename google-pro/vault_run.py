@@ -14,14 +14,14 @@ from pathlib import Path
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-BASE = Path("/srv/meowtools/google-pro")
+BASE = Path(os.environ.get("MTOOL_ROOT", "/srv/meowtools")) / "google-pro"
 KEY = BASE / ".vault/key.bin"
 DATA = BASE / ".vault/accounts.enc"
 
 
 def load() -> list:
     if not KEY.exists() or not DATA.exists():
-        raise SystemExit("Vault belum dibuat. Jalankan: /usr/bin/python3 /srv/meowtools/google-pro/vault_add.py")
+        raise SystemExit("Vault belum dibuat. Jalankan: /usr/bin/python3 " + str(BASE / "vault_add.py"))
     blob = DATA.read_bytes()
     return json.loads(AESGCM(KEY.read_bytes()).decrypt(blob[:12], blob[12:], None))
 

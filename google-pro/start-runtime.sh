@@ -2,8 +2,9 @@
 # Start all runtime pieces needed by the ported toolkit.
 set -e
 
-BASE=/srv/meowtools/google-pro
-FRIDA_BIN=/root/.hermes/cache/scratch/frida-server-x86_64
+BASE="${MTOOL_ROOT:-/srv/meowtools}/google-pro"
+SCRATCH_DIR="${SCRATCH_DIR:-$HOME/.hermes/cache/scratch}"
+FRIDA_BIN="$SCRATCH_DIR/frida-server-x86_64"
 [ -s "$FRIDA_BIN" ] || FRIDA_BIN=$BASE/frida-server-x86_64
 
 # Binderfs

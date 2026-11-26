@@ -7,7 +7,7 @@ import time
 import html as htmlmod
 import os
 
-sys.path.insert(0, "/srv/meowtools/google-pro")
+sys.path.insert(0, os.environ.get("MTOOL_ROOT", "/srv/meowtools") + "/google-pro")
 import vault_run
 
 ADB = "/usr/bin/adb"

@@ -3,7 +3,7 @@
 import os
 import sys
 
-BASE = "/srv/meowtools/google-pro"
+BASE = os.environ.get("MTOOL_ROOT", "/srv/meowtools") + "/google-pro"
 os.environ["ADB_PATH"] = os.path.join(BASE, "adb-waydroid")
 os.environ["PYTHONIOENCODING"] = "utf-8"
 os.environ["FRIDA_ARCH"] = "x86_64"

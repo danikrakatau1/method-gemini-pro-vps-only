@@ -16,6 +16,7 @@ fi
 
 SRC="$(cd "$(dirname "$0")" && pwd)"
 ROOT="${MTOOL_ROOT:-/srv/meowtools}"
+SCRATCH_DIR="${SCRATCH_DIR:-$HOME/.hermes/cache/scratch}"
 GP="$ROOT/google-pro"
 CV="$ROOT/credvault"
 WR="$ROOT/waydroid-web"
@@ -114,9 +115,9 @@ if [ ! -f "$GP/frida-server-x86_64" ]; then
     mv -f "$GP/frida-server" "$GP/frida-server-x86_64" 2>/dev/null || true
   fi
   chmod 755 "$GP/frida-server-x86_64"
-  mkdir -p /root/.hermes/cache/scratch
-  cp "$GP/frida-server-x86_64" /root/.hermes/cache/scratch/frida-server-x86_64
-  chmod 755 /root/.hermes/cache/scratch/frida-server-x86_64
+  mkdir -p "$SCRATCH_DIR"
+  cp "$GP/frida-server-x86_64" "$SCRATCH_DIR/frida-server-x86_64"
+  chmod 755 "$SCRATCH_DIR/frida-server-x86_64"
 fi
 
 echo "[7/9] Systemd units"
