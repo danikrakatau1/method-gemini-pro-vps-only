@@ -449,6 +449,34 @@ def claim(plan, stack, password):
     xml = dump(f"sheet-{plan}")
     joined = " ".join(dict.fromkeys(texts(xml)))
     print("SHEET", joined[:300], flush=True)
+    # Kalau Google One masih minta pilih metode bayar, pilih GoPay/Tri dulu.
+    for pick_try in range(4):
+        if "free trial" in joined.lower() or "Today Rp 0" in joined:
+            break
+        if "Payment methods" not in joined:
+            break
+        target = None
+        for needle in ("GoPay:", "3 0", "Tri"):
+            for t, d, tag, b in nodes(xml):
+                if not b or 'clickable="true"' not in tag:
+                    continue
+                inside = [tt for tt, dd, tt2, bb in nodes(xml)
+                          if bb and bb[0] >= b[0] - 2 and bb[1] >= b[1] - 2
+                          and bb[3] <= b[3] + 2 and tt]
+                if any(needle.lower() in x.lower() for x in inside):
+                    target = b
+                    break
+            if target:
+                break
+        if not target:
+            break
+        print("Memilih metode pembayaran...", flush=True)
+        ad("shell", "input", "tap", str((target[0] + target[2]) // 2),
+           str((target[1] + target[3]) // 2))
+        time.sleep(6)
+        xml = dump(f"sheet-{plan}-{pick_try}")
+        joined = " ".join(dict.fromkeys(texts(xml)))
+        print("SHEET", joined[:300], flush=True)
     if not stack and "free trial" not in joined.lower() and "Today Rp 0" not in joined:
         print("FAIL: sheet bukan uji coba gratis — dibatalkan supaya nggak kena tagihan", flush=True)
         return False
